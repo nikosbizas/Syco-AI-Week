@@ -161,8 +161,22 @@ function renderMyEventCard(event: Event, dayEvents: Event[], index: number): str
 
 ;(window as any).closeNotesModal = (e?: MouseEvent) => {
   if (!e || e.target === document.getElementById('notes-modal')) {
+    // Auto-save text if there's content and we have an active event
+    if (currentNoteEventId) {
+      const text = (document.getElementById('notes-text') as HTMLTextAreaElement)?.value || ''
+      saveNote(currentNoteEventId, { text })
+    }
+    // Stop any active recording so it saves before nulling the event ID
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop()
+      if (recordingInterval) { clearInterval(recordingInterval); recordingInterval = null }
+      document.getElementById('record-btn')!.textContent = '🎙 Start Recording'
+      document.getElementById('recording-indicator')?.classList.add('hidden')
+      document.getElementById('recording-time')?.classList.add('hidden')
+    }
     document.getElementById('notes-modal')?.classList.remove('is-open')
     currentNoteEventId = null
+    renderMyEvents()
   }
 }
 
@@ -191,6 +205,7 @@ function renderMyEventCard(event: Event, dayEvents: Event[], index: number): str
 ;(window as any).addNoteImages = (event: Event) => {
   const input = (event as unknown as { target: HTMLInputElement }).target
   const files = Array.from(input.files || [])
+  input.value = '' // reset so same file can be re-selected
   files.forEach(file => {
     const reader = new FileReader()
     reader.onload = (e) => {
