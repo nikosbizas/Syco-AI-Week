@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090f" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Events · AI WEEK 2026</title>
+  <script type="module" src="/src/events.ts"></script>
+</head>
+<body style="background:#09090f">
+
+  <!-- Top Bar -->
+  <header class="sticky top-0 z-20 flex items-center justify-between px-4" style="background:rgba(9,9,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:12px;">
+    <div>
+      <div class="font-bold text-base" style="color:var(--text-1)">Events</div>
+      <div class="text-xs" id="events-count" style="color:var(--text-2)">Loading…</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <!-- View toggle -->
+      <div class="flex rounded-lg overflow-hidden" style="border:1px solid var(--border)">
+        <button id="view-list-btn" onclick="eventsSetView('list')" class="px-3 py-1.5 text-xs font-medium transition-colors" style="background:var(--accent);color:white">List</button>
+        <button id="view-timeline-btn" onclick="eventsSetView('timeline')" class="px-3 py-1.5 text-xs font-medium transition-colors" style="background:var(--bg-surface);color:var(--text-2)">Timeline</button>
+      </div>
+      <button id="burger-btn" class="btn-icon" aria-label="Menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Sticky filter bar -->
+  <div id="filter-bar" class="sticky z-10 px-4 py-3 space-y-3" style="top:61px;background:rgba(9,9,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)">
+    <!-- Search -->
+    <input type="text" id="search-input" placeholder="Search events, speakers…" oninput="eventsFilter()" />
+
+    <!-- Category chips -->
+    <div class="flex gap-2 overflow-x-auto pb-1" style="-ms-overflow-style:none;scrollbar-width:none">
+      <button onclick="eventsSetCategory('')" id="cat-all" class="filter-chip active flex-shrink-0">All</button>
+      <button onclick="eventsSetCategory('ai-play-stage')" id="cat-ai-play-stage" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#06b6d4"></span>AI Play Stage
+      </button>
+      <button onclick="eventsSetCategory('agentic-ai')" id="cat-agentic-ai" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#8b5cf6"></span>Agentic AI
+      </button>
+      <button onclick="eventsSetCategory('featured')" id="cat-featured" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#f59e0b"></span>Featured
+      </button>
+      <button onclick="eventsSetCategory('robotics')" id="cat-robotics" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#10b981"></span>Robotics
+      </button>
+      <button onclick="eventsSetCategory('podcast-tv-stage')" id="cat-podcast-tv-stage" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#f43f5e"></span>Podcast/TV
+      </button>
+    </div>
+
+    <!-- Day tabs (shown in timeline view too) -->
+    <div class="flex gap-2">
+      <button onclick="eventsSetDay(1)" id="day1-tab" class="filter-chip active flex-1 justify-center font-semibold">Day 1 · May 19</button>
+      <button onclick="eventsSetDay(2)" id="day2-tab" class="filter-chip flex-1 justify-center font-semibold">Day 2 · May 20</button>
+    </div>
+  </div>
+
+  <!-- List view -->
+  <div id="list-view" class="px-4 py-4 max-w-lg mx-auto">
+    <div id="events-list" class="space-y-3"></div>
+  </div>
+
+  <!-- Timeline view -->
+  <div id="timeline-view" class="hidden px-4 py-4 max-w-lg mx-auto">
+    <div id="timeline-content" class="relative"></div>
+  </div>
+
+  <!-- Event Detail Modal -->
+  <div id="event-modal" class="modal-overlay hidden" onclick="closeEventModal(event)">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div id="modal-cat-badge"></div>
+        <button onclick="closeEventModal()" class="btn-icon flex-shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <h2 id="modal-title" class="font-bold text-base leading-snug mb-3" style="color:var(--text-1)"></h2>
+      <div id="modal-time" class="text-sm font-semibold mb-2" style="color:var(--accent)"></div>
+      <div id="modal-stage" class="text-xs mb-4" style="color:var(--text-2)"></div>
+      <div id="modal-speakers" class="space-y-2 mb-5"></div>
+      <button id="modal-save-btn" onclick="modalToggleSave()" class="btn-primary w-full">Save to My List</button>
+    </div>
+  </div>
+
+  <!-- Burger Overlay -->
+  <div id="burger-overlay" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,0.6)"></div>
+
+  <!-- Burger Drawer -->
+  <div id="burger-drawer" class="burger-drawer fixed top-0 right-0 h-full w-72 z-50 transform translate-x-full transition-transform duration-300 flex flex-col p-6 gap-3">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-semibold text-base" style="color:var(--text-1)">Menu</span>
+      <button id="close-drawer" class="btn-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <button id="export-btn" class="btn-ghost text-left">Export My Data</button>
+    <button id="clear-data-btn" class="btn-ghost text-left" style="color:var(--danger);border-color:var(--danger)">Clear All Data</button>
+    <div class="mt-auto text-xs" style="color:var(--text-2)">Syco × AI WEEK 2026<br>May 19–20 · Fiera Milano, Rho</div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-30">
+    <div class="flex items-center justify-around px-2 py-2 max-w-lg mx-auto">
+      <a href="index.html" data-nav="dashboard" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span style="font-size:10px;font-weight:500">Home</span>
+      </a>
+      <a href="events.html" data-nav="events" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span style="font-size:10px;font-weight:500">Events</span>
+      </a>
+      <a href="my-events.html" data-nav="my-events" class="nav-item relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span data-my-events-count class="hidden absolute -top-0.5 right-0.5 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style="background:var(--accent)">0</span>
+        <span style="font-size:10px;font-weight:500">My List</span>
+      </a>
+      <a href="access.html" data-nav="access" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span style="font-size:10px;font-weight:500">Access</span>
+      </a>
+      <a href="profile.html" data-nav="profile" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span style="font-size:10px;font-weight:500">Profile</span>
+      </a>
+    </div>
+  </nav>
+
+</body>
+</html>

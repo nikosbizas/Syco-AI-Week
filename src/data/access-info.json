@@ -1,0 +1,56 @@
+{
+  "venue": {
+    "name": "Fiera Milano",
+    "address": "SS Sempione 28, 20017 Rho MI, Italy",
+    "mapsUrl": "https://maps.google.com/?q=Fiera+Milano+Rho+Milan",
+    "hall": "Padiglione 2"
+  },
+  "dates": {
+    "day1": "2026-05-19",
+    "day2": "2026-05-20",
+    "hours": "9:00 - 19:30"
+  },
+  "transport": [
+    {
+      "icon": "train",
+      "title": "Metro M1 (Red Line)",
+      "description": "Stop: Rho Fiera Milano — direct from Duomo/Cadorna in ~30 min"
+    },
+    {
+      "icon": "train",
+      "title": "Train from Milano Centrale",
+      "description": "S5/S6 regional train to Rho Fiera (~20 min). Check Trenord app."
+    },
+    {
+      "icon": "car",
+      "title": "By Car",
+      "description": "A8 highway, exit Fiera. Parking areas P1–P8 on site. Arrive early to avoid queues."
+    },
+    {
+      "icon": "plane",
+      "title": "From Malpensa Airport",
+      "description": "Malpensa Express train to Cadorna, then M1 to Rho Fiera (~50 min total)"
+    }
+  ],
+  "badgePickup": {
+    "location": "Registration Desk, Entrance Gate 1",
+    "hours": "8:30 - 11:00 (first entry recommended)"
+  },
+  "tips": [
+    "Download the AI Week app for live updates",
+    "Bring a portable charger — long days ahead",
+    "Comfortable shoes — the venue is very large",
+    "Badge required at all times — keep it visible",
+    "Water stations available throughout the venue"
+  ],
+  "wifi": {
+    "network": "AI WEEK 2026",
+    "password": "(check badge/registration confirmation)"
+  },
+  "contacts": [
+    {
+      "role": "Event Info",
+      "email": "info@iaspiegatasemplice.it"
+    }
+  ]
+}

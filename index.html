@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>AI WEEK 2026 · Syco</title>
+  <link rel="manifest" href="/manifest.json" />
+  <script type="module" src="/src/main.ts"></script>
+</head>
+<body style="background:#09090f">
+
+  <!-- Top Bar -->
+  <header class="sticky top-0 z-20 flex items-center justify-between px-4 pt-safe" style="background:rgba(9,9,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:12px;">
+    <div>
+      <div class="flex items-center gap-2">
+        <div class="w-2 h-2 rounded-full" style="background:var(--accent)"></div>
+        <span class="font-bold text-base" style="color:var(--text-1)">AI WEEK 2026</span>
+      </div>
+      <div class="text-xs mt-0.5" style="color:var(--text-2)" id="header-subtitle">Milan · Fiera Milano</div>
+    </div>
+    <button id="burger-btn" class="btn-icon" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <main class="px-4 py-4 max-w-lg mx-auto space-y-5">
+
+    <!-- Day selector -->
+    <div class="flex gap-2">
+      <button id="day1-btn" onclick="dashboardSetDay(1)" class="filter-chip flex-1 justify-center text-sm font-semibold">
+        Day 1 · May 19
+      </button>
+      <button id="day2-btn" onclick="dashboardSetDay(2)" class="filter-chip flex-1 justify-center text-sm font-semibold">
+        Day 2 · May 20
+      </button>
+    </div>
+
+    <!-- NOW section -->
+    <section>
+      <div class="flex items-center gap-2 section-header">
+        <div class="pulse-dot"></div>
+        HAPPENING NOW
+      </div>
+      <div id="now-events" class="space-y-3">
+        <div class="event-card text-center py-6" style="color:var(--text-2);font-size:13px;">
+          Loading…
+        </div>
+      </div>
+    </section>
+
+    <!-- Up Next -->
+    <section>
+      <div class="flex items-center justify-between section-header">
+        <span>UP NEXT</span>
+        <a href="my-events.html" style="color:var(--accent);font-size:11px;font-weight:600;letter-spacing:normal;text-transform:none;">My List →</a>
+      </div>
+      <div id="upnext-events" class="space-y-3"></div>
+    </section>
+
+    <!-- Quick filters -->
+    <section>
+      <div class="section-header">BROWSE BY CATEGORY</div>
+      <div class="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+        <a href="events.html" class="filter-chip active flex-shrink-0">All Events</a>
+        <a href="events.html?category=ai-play-stage" class="filter-chip flex-shrink-0" style="--chip-color:#06b6d4">
+          <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:#06b6d4"></span>
+          AI Play Stage
+        </a>
+        <a href="events.html?category=agentic-ai" class="filter-chip flex-shrink-0">
+          <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:#8b5cf6"></span>
+          Agentic AI
+        </a>
+        <a href="events.html?category=featured" class="filter-chip flex-shrink-0">
+          <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:#f59e0b"></span>
+          Featured
+        </a>
+        <a href="events.html?category=robotics" class="filter-chip flex-shrink-0">
+          <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:#10b981"></span>
+          Robotics
+        </a>
+        <a href="events.html?category=podcast-tv-stage" class="filter-chip flex-shrink-0">
+          <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:#f43f5e"></span>
+          Podcast/TV
+        </a>
+      </div>
+    </section>
+
+    <!-- My Events summary -->
+    <section>
+      <div class="section-header">MY SCHEDULE</div>
+      <a href="my-events.html" class="event-card flex items-center justify-between gap-3 cursor-pointer" style="text-decoration:none;display:flex;">
+        <div>
+          <div class="font-semibold text-sm" style="color:var(--text-1)">My Events</div>
+          <div class="text-xs mt-0.5" id="my-events-summary" style="color:var(--text-2)">No events saved yet</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="my-events-hero-count" class="hidden text-2xl font-bold" style="color:var(--accent)">0</div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-2)"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </a>
+    </section>
+
+  </main>
+
+  <!-- Burger Overlay -->
+  <div id="burger-overlay" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,0.6)"></div>
+
+  <!-- Burger Drawer -->
+  <div id="burger-drawer" class="burger-drawer fixed top-0 right-0 h-full w-72 z-50 transform translate-x-full transition-transform duration-300 flex flex-col p-6 gap-3">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-semibold text-base" style="color:var(--text-1)">Menu</span>
+      <button id="close-drawer" class="btn-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <a href="events.html" class="btn-ghost text-left" style="display:block">Browse Events</a>
+    <button id="export-btn" class="btn-ghost text-left">Export My Data</button>
+    <button id="clear-data-btn" class="btn-ghost text-left" style="color:var(--danger);border-color:var(--danger)">Clear All Data</button>
+    <div class="mt-auto text-xs" style="color:var(--text-2)">
+      Syco × AI WEEK 2026<br>
+      May 19–20 · Fiera Milano, Rho
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-30">
+    <div class="flex items-center justify-around px-2 py-2 max-w-lg mx-auto">
+      <a href="index.html" data-nav="dashboard" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span style="font-size:10px;font-weight:500">Home</span>
+      </a>
+      <a href="events.html" data-nav="events" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span style="font-size:10px;font-weight:500">Events</span>
+      </a>
+      <a href="my-events.html" data-nav="my-events" class="nav-item relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span data-my-events-count class="hidden absolute -top-0.5 right-0.5 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style="background:var(--accent)">0</span>
+        <span style="font-size:10px;font-weight:500">My List</span>
+      </a>
+      <a href="access.html" data-nav="access" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span style="font-size:10px;font-weight:500">Access</span>
+      </a>
+      <a href="profile.html" data-nav="profile" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span style="font-size:10px;font-weight:500">Profile</span>
+      </a>
+    </div>
+  </nav>
+
+</body>
+</html>

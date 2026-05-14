@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090f" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>My Events · AI WEEK 2026</title>
+  <script type="module" src="/src/my-events.ts"></script>
+</head>
+<body style="background:#09090f">
+
+  <header class="sticky top-0 z-20 flex items-center justify-between px-4" style="background:rgba(9,9,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:12px;">
+    <div>
+      <div class="font-bold text-base" style="color:var(--text-1)">My Schedule</div>
+      <div class="text-xs" id="myevents-count" style="color:var(--text-2)">Loading…</div>
+    </div>
+    <button id="burger-btn" class="btn-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <main class="px-4 py-4 max-w-lg mx-auto">
+    <div id="myevents-content"></div>
+  </main>
+
+  <!-- Notes Modal -->
+  <div id="notes-modal" class="modal-overlay hidden" onclick="closeNotesModal(event)">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-base" style="color:var(--text-1)">Notes</h3>
+        <button onclick="closeNotesModal()" class="btn-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div id="notes-event-title" class="text-sm font-semibold mb-4 leading-snug" style="color:var(--text-2)"></div>
+
+      <!-- Tabs -->
+      <div class="flex gap-1 mb-4 p-1 rounded-xl" style="background:var(--bg-surface)">
+        <button onclick="notesSetTab('text')" id="tab-text" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-colors" style="background:var(--accent);color:white">Text</button>
+        <button onclick="notesSetTab('images')" id="tab-images" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-colors" style="color:var(--text-2)">Photos</button>
+        <button onclick="notesSetTab('audio')" id="tab-audio" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-colors" style="color:var(--text-2)">Audio</button>
+      </div>
+
+      <!-- Text tab -->
+      <div id="notes-tab-text">
+        <textarea id="notes-text" rows="6" placeholder="Write your notes…" style="resize:none"></textarea>
+        <button onclick="saveNoteText()" class="btn-primary w-full mt-3">Save Note</button>
+      </div>
+
+      <!-- Images tab -->
+      <div id="notes-tab-images" class="hidden">
+        <div id="notes-images-preview" class="grid grid-cols-3 gap-2 mb-3"></div>
+        <div class="flex gap-2">
+          <label class="btn-ghost flex-1 text-center cursor-pointer" style="display:flex;align-items:center;justify-content:center;gap:6px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            Gallery
+            <input type="file" accept="image/*" multiple class="hidden" onchange="addNoteImages(event)" />
+          </label>
+          <label class="btn-ghost flex-1 text-center cursor-pointer" style="display:flex;align-items:center;justify-content:center;gap:6px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Camera
+            <input type="file" accept="image/*" capture="environment" class="hidden" onchange="addNoteImages(event)" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Audio tab -->
+      <div id="notes-tab-audio" class="hidden">
+        <div id="audio-playback" class="hidden mb-4">
+          <audio id="notes-audio-player" controls class="w-full" style="height:40px"></audio>
+        </div>
+        <div class="flex flex-col items-center gap-4 py-4">
+          <div id="recording-time" class="text-3xl font-bold tabular-nums hidden" style="color:var(--accent)">0:00</div>
+          <div id="recording-indicator" class="hidden flex items-center gap-2 text-sm" style="color:var(--danger)">
+            <div class="pulse-dot" style="background:var(--danger)"></div>
+            Recording…
+          </div>
+          <div class="flex gap-3">
+            <button id="record-btn" onclick="toggleRecording()" class="btn-primary px-8" style="border-radius:50px">
+              🎙 Start Recording
+            </button>
+          </div>
+          <p class="text-xs text-center" style="color:var(--text-2)">Tap to start recording your thoughts about this session</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Burger Overlay -->
+  <div id="burger-overlay" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,0.6)"></div>
+  <div id="burger-drawer" class="burger-drawer fixed top-0 right-0 h-full w-72 z-50 transform translate-x-full transition-transform duration-300 flex flex-col p-6 gap-3">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-semibold text-base" style="color:var(--text-1)">Menu</span>
+      <button id="close-drawer" class="btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <a href="events.html" class="btn-ghost text-left" style="display:block">Browse Events</a>
+    <button id="export-btn" class="btn-ghost text-left">Export My Data</button>
+    <button id="clear-data-btn" class="btn-ghost text-left" style="color:var(--danger);border-color:var(--danger)">Clear All Data</button>
+    <div class="mt-auto text-xs" style="color:var(--text-2)">Syco × AI WEEK 2026<br>May 19–20 · Fiera Milano, Rho</div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-30">
+    <div class="flex items-center justify-around px-2 py-2 max-w-lg mx-auto">
+      <a href="index.html" data-nav="dashboard" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span style="font-size:10px;font-weight:500">Home</span>
+      </a>
+      <a href="events.html" data-nav="events" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span style="font-size:10px;font-weight:500">Events</span>
+      </a>
+      <a href="my-events.html" data-nav="my-events" class="nav-item relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span data-my-events-count class="hidden absolute -top-0.5 right-0.5 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style="background:var(--accent)">0</span>
+        <span style="font-size:10px;font-weight:500">My List</span>
+      </a>
+      <a href="access.html" data-nav="access" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span style="font-size:10px;font-weight:500">Access</span>
+      </a>
+      <a href="profile.html" data-nav="profile" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span style="font-size:10px;font-weight:500">Profile</span>
+      </a>
+    </div>
+  </nav>
+
+</body>
+</html>

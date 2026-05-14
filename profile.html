@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090f" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>Profile · AI WEEK 2026</title>
+  <script type="module" src="/src/profile.ts"></script>
+</head>
+<body style="background:#09090f">
+
+  <header class="sticky top-0 z-20 flex items-center justify-between px-4" style="background:rgba(9,9,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:12px;">
+    <div class="font-bold text-base" style="color:var(--text-1)">Profile</div>
+    <button id="burger-btn" class="btn-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <main class="px-4 py-5 max-w-lg mx-auto space-y-5">
+
+    <!-- Badge Photo -->
+    <section>
+      <div class="section-header">BADGE / PASS PHOTO</div>
+      <div class="event-card text-center">
+        <div id="badge-preview" class="mb-3">
+          <div class="w-24 h-32 rounded-xl mx-auto flex items-center justify-center" style="background:var(--bg-elevated);border:2px dashed var(--border)">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-2)"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+        </div>
+        <div class="flex gap-2 justify-center">
+          <label class="btn-ghost cursor-pointer text-sm" style="display:inline-flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload
+            <input type="file" accept="image/*" class="hidden" onchange="handleBadgeUpload(event)" />
+          </label>
+          <label class="btn-ghost cursor-pointer text-sm" style="display:inline-flex;align-items:center;gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Camera
+            <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleBadgeUpload(event)" />
+          </label>
+          <button onclick="clearBadge()" id="clear-badge-btn" class="btn-ghost hidden text-sm" style="color:var(--danger);border-color:var(--danger)">Remove</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Name & Role -->
+    <section>
+      <div class="section-header">PERSONAL INFO</div>
+      <div class="event-card space-y-4">
+        <div>
+          <label class="block text-xs font-semibold mb-2" style="color:var(--text-2)">YOUR NAME</label>
+          <input type="text" id="profile-name" placeholder="e.g. Maria Papadopoulou" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-2" style="color:var(--text-2)">ROLE / TEAM</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setRole('social-content')" id="role-social-content" class="filter-chip justify-center text-xs py-3">
+              📱 Social/<br>Content
+            </button>
+            <button onclick="setRole('creative-design')" id="role-creative-design" class="filter-chip justify-center text-xs py-3">
+              🎨 Creative/<br>Design
+            </button>
+            <button onclick="setRole('development')" id="role-development" class="filter-chip justify-center text-xs py-3">
+              💻 Develop-<br>ment
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Accent Color -->
+    <section>
+      <div class="section-header">APP ACCENT COLOR</div>
+      <div class="event-card">
+        <div class="flex gap-3 justify-center mb-4">
+          <div class="color-swatch" style="background:#7c5cfc" data-color="#7c5cfc" onclick="pickColor('#7c5cfc')"></div>
+          <div class="color-swatch" style="background:#06b6d4" data-color="#06b6d4" onclick="pickColor('#06b6d4')"></div>
+          <div class="color-swatch" style="background:#f59e0b" data-color="#f59e0b" onclick="pickColor('#f59e0b')"></div>
+          <div class="color-swatch" style="background:#f43f5e" data-color="#f43f5e" onclick="pickColor('#f43f5e')"></div>
+          <div class="color-swatch" style="background:#10b981" data-color="#10b981" onclick="pickColor('#10b981')"></div>
+          <div class="color-swatch" style="background:#ec4899" data-color="#ec4899" onclick="pickColor('#ec4899')"></div>
+        </div>
+        <div class="flex gap-2 items-center">
+          <input type="text" id="custom-color" placeholder="#7c5cfc" style="font-family:monospace" oninput="pickColor(this.value)" />
+          <div id="color-preview" class="w-10 h-10 rounded-lg flex-shrink-0" style="background:var(--accent);border:2px solid var(--border)"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section>
+      <div class="section-header">MY STATS</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="event-card text-center">
+          <div class="text-2xl font-bold" id="stat-events" style="color:var(--accent)">0</div>
+          <div class="text-xs mt-1" style="color:var(--text-2)">Events Saved</div>
+        </div>
+        <div class="event-card text-center">
+          <div class="text-2xl font-bold" id="stat-notes" style="color:var(--accent)">0</div>
+          <div class="text-xs mt-1" style="color:var(--text-2)">Notes Written</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Save button -->
+    <button onclick="saveProfileData()" class="btn-primary w-full">Save Profile</button>
+
+    <!-- App Info -->
+    <div class="text-center pb-4">
+      <div class="text-xs" style="color:var(--text-2)">Syco × AI WEEK 2026 · May 19–20 · Fiera Milano, Rho</div>
+      <div class="text-xs mt-1" style="color:var(--text-2);opacity:0.5">v1.0.0 · Data extracted from aiweek.it</div>
+    </div>
+
+  </main>
+
+  <!-- Burger Overlay -->
+  <div id="burger-overlay" class="fixed inset-0 z-40 hidden" style="background:rgba(0,0,0,0.6)"></div>
+  <div id="burger-drawer" class="burger-drawer fixed top-0 right-0 h-full w-72 z-50 transform translate-x-full transition-transform duration-300 flex flex-col p-6 gap-3">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-semibold text-base" style="color:var(--text-1)">Menu</span>
+      <button id="close-drawer" class="btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <a href="events.html" class="btn-ghost text-left" style="display:block">Browse Events</a>
+    <button id="export-btn" class="btn-ghost text-left">Export My Data</button>
+    <button id="clear-data-btn" class="btn-ghost text-left" style="color:var(--danger);border-color:var(--danger)">Clear All Data</button>
+    <div class="mt-auto text-xs" style="color:var(--text-2)">Syco × AI WEEK 2026<br>May 19–20 · Fiera Milano, Rho</div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-30">
+    <div class="flex items-center justify-around px-2 py-2 max-w-lg mx-auto">
+      <a href="index.html" data-nav="dashboard" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span style="font-size:10px;font-weight:500">Home</span>
+      </a>
+      <a href="events.html" data-nav="events" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span style="font-size:10px;font-weight:500">Events</span>
+      </a>
+      <a href="my-events.html" data-nav="my-events" class="nav-item relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span data-my-events-count class="hidden absolute -top-0.5 right-0.5 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1" style="background:var(--accent)">0</span>
+        <span style="font-size:10px;font-weight:500">My List</span>
+      </a>
+      <a href="access.html" data-nav="access" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span style="font-size:10px;font-weight:500">Access</span>
+      </a>
+      <a href="profile.html" data-nav="profile" class="nav-item flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span style="font-size:10px;font-weight:500">Profile</span>
+      </a>
+    </div>
+  </nav>
+
+</body>
+</html>
