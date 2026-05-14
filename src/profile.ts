@@ -14,11 +14,29 @@ function renderBadgePreview(src: string) {
   const preview = document.getElementById('badge-preview')
   if (!preview) return
   preview.innerHTML = `
-    <img src="${src}" class="w-full max-w-[200px] mx-auto rounded-xl object-contain mb-2"
-         style="max-height:250px;border:2px solid var(--border)" />
+    <img src="${src}" class="w-full max-w-[200px] mx-auto rounded-xl object-contain mb-2 cursor-pointer"
+         style="max-height:250px;border:2px solid var(--border)"
+         onclick="openBadgeLightbox(this.src)"
+         title="Tap to enlarge" />
   `
   document.getElementById('clear-badge-btn')?.classList.remove('hidden')
 }
+
+function openLightbox(src: string) {
+  const lb = document.getElementById('badge-lightbox')
+  const img = document.getElementById('lightbox-img') as HTMLImageElement
+  if (!lb || !img) return
+  img.src = src
+  lb.style.display = 'flex'
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('badge-lightbox')
+  if (lb) lb.style.display = 'none'
+}
+
+;(window as any).openBadgeLightbox = openLightbox
+;(window as any).closeBadgeLightbox = closeLightbox
 
 function setRole(role: string) {
   const roles = ['social-content', 'creative-design', 'development', 'account']
