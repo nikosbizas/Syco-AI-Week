@@ -65,10 +65,43 @@ export function primaryCategory(event: Event): CategoryId {
 
 export function applyAccentColor(accent: string) {
   document.documentElement.style.setProperty('--accent', accent)
-  // Generate dim version
   const hex = accent.replace('#', '')
   const r = parseInt(hex.slice(0, 2), 16)
   const g = parseInt(hex.slice(2, 4), 16)
   const b = parseInt(hex.slice(4, 6), 16)
   document.documentElement.style.setProperty('--accent-dim', `rgba(${r},${g},${b},0.15)`)
 }
+
+// ─── Suggestions ─────────────────────────────────────────────────────────────
+
+const SYCO_KEYWORDS = [
+  'design', 'creative', 'visual', 'brand', 'generative', 'image', 'video', 'motion',
+  'content', 'marketing', 'social', 'copy', 'writing', 'storytelling', 'campaign',
+  'influencer', 'creator', 'newsletter', 'strategy',
+  'developer', 'development', 'engineering', 'agent', 'automation', 'workflow',
+  'code', 'api', 'integration', 'tool', 'platform', 'saas',
+  'agency', 'productivity', 'collaboration',
+]
+
+const TEAM_KEYWORDS: Record<string, string[]> = {
+  'creative-design': ['design', 'creative', 'visual', 'brand', 'generative', 'image', 'video', 'motion', 'art', 'graphic', 'runway', 'midjourney'],
+  'social-content':  ['content', 'marketing', 'social', 'copy', 'writing', 'storytelling', 'campaign', 'newsletter', 'creator', 'ugc', 'influencer'],
+  'development':     ['developer', 'development', 'engineering', 'agent', 'automation', 'code', 'api', 'integration', 'workflow', 'tool', 'platform'],
+}
+
+export function isSuggestedEvent(event: Event): boolean {
+  const text = `${event.title} ${event.tags.join(' ')} ${event.speakers.map(s => s.name).join(' ')}`.toLowerCase()
+  return SYCO_KEYWORDS.filter(k => text.includes(k)).length >= 2
+}
+
+export function getEventPrimaryTeam(event: Event): string {
+  const text = `${event.title} ${event.tags.join(' ')}`.toLowerCase()
+  let best = ''
+  let bestScore = 0
+  for (const [team, keywords] of Object.entries(TEAM_KEYWORDS)) {
+    const score = keywords.filter(k => text.includes(k)).length
+    if (score > bestScore) { bestScore = score; best = team }
+  }
+  return best
+}
+

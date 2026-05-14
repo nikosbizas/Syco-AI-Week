@@ -1,8 +1,8 @@
 import './styles/main.css'
 import Alpine from 'alpinejs'
 import { initApp } from './lib/nav'
-import { getMyEvents } from './lib/store'
-import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, getEventDay } from './lib/utils'
+import { getMyEvents, getProfile } from './lib/store'
+import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, getEventDay, isSuggestedEvent, getEventPrimaryTeam } from './lib/utils'
 import type { Event, CategoryId } from './lib/types'
 import eventsData from './data/events.json'
 
@@ -115,6 +115,44 @@ function renderUpNext(day: number) {
   container.innerHTML = upNext.map(e => renderEventCard(e)).join('')
 }
 
+const TEAM_LABELS: Record<string, string> = {
+  'social-content':  'FOR SOCIAL / CONTENT',
+  'creative-design': 'FOR CREATIVE / DESIGN',
+  'development':     'FOR DEVELOPMENT',
+}
+
+function renderSuggested(day: number) {
+  const profile = getProfile()
+  const section = document.getElementById('suggested-section')
+  if (!section) return
+
+  if (!profile.role) {
+    section.classList.add('hidden')
+    return
+  }
+
+  section.classList.remove('hidden')
+
+  const header = document.getElementById('suggested-header')
+  if (header) header.textContent = TEAM_LABELS[profile.role] || 'SUGGESTED FOR YOU'
+
+  const dateStr = day === 1 ? '2026-05-19' : '2026-05-20'
+  const suggestions = allEvents
+    .filter(e => e.date === dateStr && isSuggestedEvent(e))
+    .filter(e => {
+      const team = getEventPrimaryTeam(e)
+      return !team || team === profile.role
+    })
+    .slice(0, 4)
+
+  const container = document.getElementById('suggested-events')
+  if (!container) return
+
+  container.innerHTML = suggestions.length
+    ? suggestions.map(e => renderEventCard(e)).join('')
+    : `<div class="event-card text-center py-5" style="color:var(--text-2);font-size:13px;">No specific picks for your team on this day</div>`
+}
+
 function updateMyEventsSummary() {
   const count = getMyEvents().length
   const summary = document.getElementById('my-events-summary')
@@ -142,6 +180,7 @@ function updateMyEventsSummary() {
 
   renderNowSection(day)
   renderUpNext(day)
+  renderSuggested(day)
 }
 
 initApp('dashboard')

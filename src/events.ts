@@ -2,7 +2,7 @@ import './styles/main.css'
 import Alpine from 'alpinejs'
 import { initApp } from './lib/nav'
 import { getMyEvents, toggleMyEvent, isMyEvent } from './lib/store'
-import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, hasConflict, timeToMinutes } from './lib/utils'
+import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, hasConflict, timeToMinutes, isSuggestedEvent } from './lib/utils'
 import type { Event, CategoryId } from './lib/types'
 import eventsData from './data/events.json'
 
@@ -16,11 +16,13 @@ let currentCategory: CategoryId | '' = ''
 let currentDay = 1
 let currentView: 'list' | 'timeline' = 'list'
 let currentModalEvent: Event | null = null
+let showSuggestedOnly = false
 
 // Parse URL params
 const params = new URLSearchParams(window.location.search)
 const urlCat = params.get('category') as CategoryId | null
 if (urlCat) currentCategory = urlCat
+if (params.get('filter') === 'for-syco') showSuggestedOnly = true
 
 function showToast(msg: string, color = 'var(--accent)') {
   const existing = document.querySelector('.toast')
@@ -40,6 +42,7 @@ function getFilteredEvents(): Event[] {
   return allEvents
     .filter(e => {
       if (e.date !== dateStr) return false
+      if (showSuggestedOnly && !isSuggestedEvent(e)) return false
       if (currentCategory && !e.categories.includes(currentCategory)) return false
       if (query) {
         const searchStr = [e.title, ...e.speakers.map(s => s.name + ' ' + s.company)].join(' ').toLowerCase()
@@ -158,9 +161,17 @@ function render() {
 
 ;(window as any).eventsSetCategory = (cat: CategoryId | '') => {
   currentCategory = cat
-  // Update chip states
+  showSuggestedOnly = false
   document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
   document.getElementById(cat ? `cat-${cat}` : 'cat-all')?.classList.add('active')
+  render()
+}
+
+;(window as any).eventsSetSuggested = () => {
+  showSuggestedOnly = true
+  currentCategory = ''
+  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
+  document.getElementById('cat-for-syco')?.classList.add('active')
   render()
 }
 
@@ -263,7 +274,11 @@ function render() {
 }
 
 // Init
-if (urlCat) {
+if (showSuggestedOnly) {
+  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
+  document.getElementById('cat-for-syco')?.classList.add('active')
+  render()
+} else if (urlCat) {
   ;(window as any).eventsSetCategory(urlCat)
 } else {
   render()
