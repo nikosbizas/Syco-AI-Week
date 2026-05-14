@@ -63,6 +63,10 @@ export function primaryCategory(event: Event): CategoryId {
   return event.categories[0]
 }
 
+export function applyTheme(theme: 'dark' | 'light') {
+  document.documentElement.classList.toggle('light', theme === 'light')
+}
+
 export function applyAccentColor(accent: string) {
   document.documentElement.style.setProperty('--accent', accent)
   const hex = accent.replace('#', '')

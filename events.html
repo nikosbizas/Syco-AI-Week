@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>try{var p=JSON.parse(localStorage.getItem("syco_profile")||"{}");if(p.theme==="light")document.documentElement.classList.add("light")}catch(e){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#09090f" />
@@ -9,10 +10,10 @@
   <title>Events · AI WEEK 2026</title>
   <script type="module" src="/src/events.ts"></script>
 </head>
-<body style="background:#09090f">
+<body>
 
   <!-- Top Bar -->
-  <header class="sticky top-0 z-20 flex items-center justify-between px-4" style="background:rgba(9,9,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:12px;">
+  <header class="sticky top-0 z-20 flex items-center justify-between px-4" style="background:var(--bg-header);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:12px;">
     <div>
       <div class="font-bold text-base" style="color:var(--text-1)">Events</div>
       <div class="text-xs" id="events-count" style="color:var(--text-2)">Loading…</div>
@@ -30,7 +31,7 @@
   </header>
 
   <!-- Sticky filter bar -->
-  <div id="filter-bar" class="sticky z-10 px-4 py-3 space-y-3" style="top:61px;background:rgba(9,9,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)">
+  <div id="filter-bar" class="sticky z-10 px-4 py-3 space-y-3" style="top:61px;background:var(--bg-header);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)">
     <!-- Search -->
     <input type="text" id="search-input" placeholder="Search events, speakers…" oninput="eventsFilter()" />
 

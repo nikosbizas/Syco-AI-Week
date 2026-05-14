@@ -1,11 +1,11 @@
 import { getMyEvents, getProfile } from './store'
-import { applyAccentColor } from './utils'
+import { applyAccentColor, applyTheme } from './utils'
 
 export type PageId = 'dashboard' | 'events' | 'my-events' | 'access' | 'profile'
 
 export function initApp(activePage: PageId) {
-  // Apply saved accent color
   const profile = getProfile()
+  applyTheme(profile.theme || 'dark')
   if (profile.accent) applyAccentColor(profile.accent)
 
   // Set active nav state

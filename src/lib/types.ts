@@ -36,6 +36,7 @@ export interface Profile {
   role: 'social-content' | 'creative-design' | 'development' | 'account' | ''
   accent: string
   badgePhoto: string
+  theme: 'dark' | 'light'
 }
 
 export type MyEvents = string[]

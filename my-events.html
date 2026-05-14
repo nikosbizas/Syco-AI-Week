@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>try{var p=JSON.parse(localStorage.getItem("syco_profile")||"{}");if(p.theme==="light")document.documentElement.classList.add("light")}catch(e){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#09090f" />
@@ -9,9 +10,9 @@
   <title>My Events · AI WEEK 2026</title>
   <script type="module" src="/src/my-events.ts"></script>
 </head>
-<body style="background:#09090f">
+<body>
 
-  <header class="sticky top-0 z-20 flex items-center justify-between px-4" style="background:rgba(9,9,15,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:12px;">
+  <header class="sticky top-0 z-20 flex items-center justify-between px-4" style="background:var(--bg-header);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:12px;">
     <div>
       <div class="font-bold text-base" style="color:var(--text-1)">My Schedule</div>
       <div class="text-xs" id="myevents-count" style="color:var(--text-2)">Loading…</div>

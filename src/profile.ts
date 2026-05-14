@@ -2,7 +2,7 @@ import './styles/main.css'
 import Alpine from 'alpinejs'
 import { initApp } from './lib/nav'
 import { getProfile, saveProfile, getMyEvents, getNotes } from './lib/store'
-import { applyAccentColor } from './lib/utils'
+import { applyAccentColor, applyTheme } from './lib/utils'
 
 ;(window as any).Alpine = Alpine
 Alpine.start()
@@ -58,9 +58,23 @@ function pickColor(color: string) {
   if (customInput) customInput.value = color
 }
 
+function setTheme(theme: 'dark' | 'light') {
+  applyTheme(theme)
+  ;(window as any).__selectedTheme = theme
+  const darkBtn = document.getElementById('theme-dark')
+  const lightBtn = document.getElementById('theme-light')
+  if (darkBtn && lightBtn) {
+    const activeStyle = 'background:var(--accent);color:white'
+    const inactiveStyle = 'color:var(--text-2)'
+    darkBtn.style.cssText = theme === 'dark' ? activeStyle : inactiveStyle
+    lightBtn.style.cssText = theme === 'light' ? activeStyle : inactiveStyle
+  }
+}
+
 // Expose to HTML inline onclick handlers
 ;(window as any).setRole = setRole
 ;(window as any).pickColor = pickColor
+;(window as any).setTheme = setTheme
 
 // ─── Load saved profile ───────────────────────────────────────────────────────
 
@@ -72,6 +86,7 @@ if (nameInput) nameInput.value = profile.name || ''
 if (profile.role) setRole(profile.role)
 if (profile.accent) pickColor(profile.accent)
 if (profile.badgePhoto) renderBadgePreview(profile.badgePhoto)
+setTheme(profile.theme || 'dark')
 
 // Stats from localStorage
 const myEventsCount = getMyEvents().length
@@ -115,8 +130,9 @@ if (statNotes) statNotes.textContent = String(notesCount)
   const name = nameEl?.value.trim() || ''
   const accent = colorEl?.value || '#7c5cfc'
   const role = (window as any).__selectedRole || ''
+  const theme = (window as any).__selectedTheme || 'dark'
 
-  saveProfile({ name, accent, role })
+  saveProfile({ name, accent, role, theme })
 
   const existing = document.querySelector('.toast')
   if (existing) existing.remove()

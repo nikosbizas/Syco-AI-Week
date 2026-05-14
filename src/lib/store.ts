@@ -41,7 +41,7 @@ export function saveNote(eventId: string, note: Partial<Note>): void {
 }
 
 export function getProfile(): Profile {
-  const defaults: Profile = { name: '', role: '', accent: '#7c5cfc', badgePhoto: '' }
+  const defaults: Profile = { name: '', role: '', accent: '#7c5cfc', badgePhoto: '', theme: 'dark' }
   try {
     return { ...defaults, ...JSON.parse(localStorage.getItem(KEYS.PROFILE) || '{}') }
   } catch { return defaults }
