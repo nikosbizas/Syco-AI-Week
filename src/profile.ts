@@ -8,33 +8,7 @@ import { applyAccentColor } from './lib/utils'
 Alpine.start()
 initApp('profile')
 
-// Load saved profile
-const profile = getProfile()
-
-// Populate fields
-const nameInput = document.getElementById('profile-name') as HTMLInputElement
-if (nameInput) nameInput.value = profile.name || ''
-
-// Set active role
-if (profile.role) setRole(profile.role)
-
-// Set accent color
-if (profile.accent) {
-  pickColor(profile.accent)
-  const customInput = document.getElementById('custom-color') as HTMLInputElement
-  if (customInput) customInput.value = profile.accent
-}
-
-// Show badge if exists
-if (profile.badgePhoto) renderBadgePreview(profile.badgePhoto)
-
-// Stats
-const myEventsCount = getMyEvents().length
-const notesCount = Object.values(getNotes()).filter(n => n.text || n.images?.length > 0 || n.audioUrl).length
-const statEvents = document.getElementById('stat-events')
-const statNotes = document.getElementById('stat-notes')
-if (statEvents) statEvents.textContent = String(myEventsCount)
-if (statNotes) statNotes.textContent = String(notesCount)
+// ─── Functions defined BEFORE the init code that calls them ───────────────────
 
 function renderBadgePreview(src: string) {
   const preview = document.getElementById('badge-preview')
@@ -45,6 +19,51 @@ function renderBadgePreview(src: string) {
   `
   document.getElementById('clear-badge-btn')?.classList.remove('hidden')
 }
+
+function setRole(role: string) {
+  const roles = ['social-content', 'creative-design', 'development', 'account']
+  roles.forEach(r => {
+    document.getElementById(`role-${r}`)?.classList.toggle('active', r === role)
+  })
+  ;(window as any).__selectedRole = role
+}
+
+function pickColor(color: string) {
+  if (!color.match(/^#[0-9a-fA-F]{6}$/)) return
+  applyAccentColor(color)
+  document.querySelectorAll<HTMLElement>('.color-swatch').forEach(el => {
+    el.classList.toggle('selected', el.dataset.color === color)
+  })
+  const preview = document.getElementById('color-preview')
+  if (preview) preview.style.background = color
+  const customInput = document.getElementById('custom-color') as HTMLInputElement
+  if (customInput) customInput.value = color
+}
+
+// Expose to HTML inline onclick handlers
+;(window as any).setRole = setRole
+;(window as any).pickColor = pickColor
+
+// ─── Load saved profile ───────────────────────────────────────────────────────
+
+const profile = getProfile()
+
+const nameInput = document.getElementById('profile-name') as HTMLInputElement
+if (nameInput) nameInput.value = profile.name || ''
+
+if (profile.role) setRole(profile.role)
+if (profile.accent) pickColor(profile.accent)
+if (profile.badgePhoto) renderBadgePreview(profile.badgePhoto)
+
+// Stats from localStorage
+const myEventsCount = getMyEvents().length
+const notesCount = Object.values(getNotes()).filter(n => n.text || n.images?.length > 0 || n.audioUrl).length
+const statEvents = document.getElementById('stat-events')
+const statNotes = document.getElementById('stat-notes')
+if (statEvents) statEvents.textContent = String(myEventsCount)
+if (statNotes) statNotes.textContent = String(notesCount)
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
 
 ;(window as any).handleBadgeUpload = (event: Event) => {
   const input = (event as unknown as { target: HTMLInputElement }).target
@@ -72,44 +91,15 @@ function renderBadgePreview(src: string) {
   document.getElementById('clear-badge-btn')?.classList.add('hidden')
 }
 
-;(window as any).setRole = function setRole(role: string) {
-  const roles = ['social-content', 'creative-design', 'development']
-  roles.forEach(r => {
-    document.getElementById(`role-${r}`)?.classList.toggle('active', r === role)
-  })
-  ;(window as any).__selectedRole = role
-}
-// also make it work globally
-function setRole(role: string) { (window as any).setRole(role) }
-
-;(window as any).pickColor = function pickColor(color: string) {
-  if (!color.match(/^#[0-9a-fA-F]{6}$/)) return
-  applyAccentColor(color)
-
-  // Update swatch selected state
-  document.querySelectorAll<HTMLElement>('.color-swatch').forEach(el => {
-    el.classList.toggle('selected', el.dataset.color === color)
-  })
-
-  // Update preview
-  const preview = document.getElementById('color-preview')
-  if (preview) preview.style.background = color
-
-  // Update input
-  const customInput = document.getElementById('custom-color') as HTMLInputElement
-  if (customInput) customInput.value = color
-}
-
 ;(window as any).saveProfileData = () => {
   const nameEl = document.getElementById('profile-name') as HTMLInputElement
   const colorEl = document.getElementById('custom-color') as HTMLInputElement
-  const name = nameEl?.value || ''
+  const name = nameEl?.value.trim() || ''
   const accent = colorEl?.value || '#7c5cfc'
   const role = (window as any).__selectedRole || ''
 
   saveProfile({ name, accent, role })
 
-  // Show success toast
   const existing = document.querySelector('.toast')
   if (existing) existing.remove()
   const t = document.createElement('div')

@@ -118,7 +118,8 @@ function renderUpNext(day: number) {
 const TEAM_LABELS: Record<string, string> = {
   'social-content':  'FOR SOCIAL / CONTENT',
   'creative-design': 'FOR CREATIVE / DESIGN',
-  'development':     'FOR DEVELOPMENT',
+  'development':     'FOR TECH / DEV',
+  'account':         'FOR ACCOUNT',
 }
 
 function renderSuggested(day: number) {

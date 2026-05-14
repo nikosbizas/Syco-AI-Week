@@ -51,19 +51,22 @@
       <div class="event-card space-y-4">
         <div>
           <label class="block text-xs font-semibold mb-2" style="color:var(--text-2)">YOUR NAME</label>
-          <input type="text" id="profile-name" placeholder="e.g. Maria Papadopoulou" />
+          <input type="text" id="profile-name" placeholder="" />
         </div>
         <div>
           <label class="block text-xs font-semibold mb-2" style="color:var(--text-2)">ROLE / TEAM</label>
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-2 gap-2">
             <button onclick="setRole('social-content')" id="role-social-content" class="filter-chip justify-center text-xs py-3">
-              📱 Social/<br>Content
+              📱 Social / Content
             </button>
             <button onclick="setRole('creative-design')" id="role-creative-design" class="filter-chip justify-center text-xs py-3">
-              🎨 Creative/<br>Design
+              🎨 Creative / Design
             </button>
             <button onclick="setRole('development')" id="role-development" class="filter-chip justify-center text-xs py-3">
-              💻 Develop-<br>ment
+              💻 Tech / Dev
+            </button>
+            <button onclick="setRole('account')" id="role-account" class="filter-chip justify-center text-xs py-3">
+              🤝 Account
             </button>
           </div>
         </div>

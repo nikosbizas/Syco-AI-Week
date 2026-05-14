@@ -33,7 +33,7 @@ export interface Note {
 
 export interface Profile {
   name: string
-  role: 'social-content' | 'creative-design' | 'development' | ''
+  role: 'social-content' | 'creative-design' | 'development' | 'account' | ''
   accent: string
   badgePhoto: string
 }

@@ -87,6 +87,7 @@ const TEAM_KEYWORDS: Record<string, string[]> = {
   'creative-design': ['design', 'creative', 'visual', 'brand', 'generative', 'image', 'video', 'motion', 'art', 'graphic', 'runway', 'midjourney'],
   'social-content':  ['content', 'marketing', 'social', 'copy', 'writing', 'storytelling', 'campaign', 'newsletter', 'creator', 'ugc', 'influencer'],
   'development':     ['developer', 'development', 'engineering', 'agent', 'automation', 'code', 'api', 'integration', 'workflow', 'tool', 'platform'],
+  'account':         ['client', 'roi', 'strategy', 'pitch', 'agency', 'business', 'management', 'brand', 'partnership', 'growth', 'sales'],
 }
 
 export function isSuggestedEvent(event: Event): boolean {
