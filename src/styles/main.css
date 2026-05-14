@@ -204,9 +204,12 @@ body {
   inset: 0;
   background: rgba(0,0,0,0.7);
   z-index: 50;
-  display: flex;
+  display: none;
   align-items: flex-end;
   padding: 0;
+}
+.modal-overlay.is-open {
+  display: flex;
 }
 
 .modal-sheet {

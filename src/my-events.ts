@@ -156,12 +156,12 @@ function renderMyEventCard(event: Event, dayEvents: Event[], index: number): str
   }
 
   ;(window as any).notesSetTab('text')
-  document.getElementById('notes-modal')?.classList.remove('hidden')
+  document.getElementById('notes-modal')?.classList.add('is-open')
 }
 
 ;(window as any).closeNotesModal = (e?: MouseEvent) => {
   if (!e || e.target === document.getElementById('notes-modal')) {
-    document.getElementById('notes-modal')?.classList.add('hidden')
+    document.getElementById('notes-modal')?.classList.remove('is-open')
     currentNoteEventId = null
   }
 }

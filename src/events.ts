@@ -245,12 +245,12 @@ function render() {
     saveBtn.style.border = saved ? '1px solid var(--accent)' : 'none'
     saveBtn.style.color = saved ? 'var(--accent)' : 'white'
   }
-  modalEl?.classList.remove('hidden')
+  modalEl?.classList.add('is-open')
 }
 
 ;(window as any).closeEventModal = (e?: MouseEvent) => {
   if (!e || e.target === document.getElementById('event-modal')) {
-    document.getElementById('event-modal')?.classList.add('hidden')
+    document.getElementById('event-modal')?.classList.remove('is-open')
   }
 }
 
