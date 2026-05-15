@@ -1,27 +1,35 @@
 import type { Event, CategoryId } from './types'
 
 export const CATEGORY_LABELS: Record<CategoryId, string> = {
-  'ai-play-stage': 'AI Play Stage',
-  'agentic-ai': 'Agentic AI',
-  'featured': 'Featured',
-  'robotics': 'Robotics',
-  'podcast-tv-stage': 'Podcast/TV Stage',
+  'ai-play-stage':   'AI Play Stage',
+  'agentic-ai':      'Agentic AI',
+  'featured':        'Featured',
+  'robotics':        'Robotics',
+  'podcast-tv-stage':'Podcast/TV',
+  'standup':         'Standup',
+  'startup':         'Startup',
+  'meetup':          'Meetup',
+  'regulation':      'Regulation',
+  'healthcare':      'Healthcare',
+  'ai-sport':        'AI Sport',
+  'charity':         'Charity',
+  'general':         'Stage',
 }
 
 export const CATEGORY_COLORS: Record<CategoryId, string> = {
-  'ai-play-stage': '#06b6d4',
-  'agentic-ai': '#8b5cf6',
-  'featured': '#f59e0b',
-  'robotics': '#10b981',
-  'podcast-tv-stage': '#f43f5e',
-}
-
-export const CATEGORY_BG: Record<CategoryId, string> = {
-  'ai-play-stage': 'rgba(6,182,212,0.15)',
-  'agentic-ai': 'rgba(139,92,246,0.15)',
-  'featured': 'rgba(245,158,11,0.15)',
-  'robotics': 'rgba(16,185,129,0.15)',
-  'podcast-tv-stage': 'rgba(244,63,94,0.15)',
+  'ai-play-stage':   '#06b6d4',
+  'agentic-ai':      '#8b5cf6',
+  'featured':        '#f59e0b',
+  'robotics':        '#10b981',
+  'podcast-tv-stage':'#f43f5e',
+  'standup':         '#f97316',
+  'startup':         '#3b82f6',
+  'meetup':          '#a855f7',
+  'regulation':      '#64748b',
+  'healthcare':      '#14b8a6',
+  'ai-sport':        '#22c55e',
+  'charity':         '#ec4899',
+  'general':         '#6b7280',
 }
 
 export function timeToMinutes(t: string): number {
@@ -31,9 +39,7 @@ export function timeToMinutes(t: string): number {
 
 export function formatTime(t: string): string {
   const [h, m] = t.split(':').map(Number)
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const h12 = h % 12 || 12
-  return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`
+  return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`
 }
 
 export function eventsOverlap(a: Event, b: Event): boolean {
@@ -60,7 +66,7 @@ export function speakerText(event: Event): string {
 }
 
 export function primaryCategory(event: Event): CategoryId {
-  return event.categories[0]
+  return event.categories[0] || 'general'
 }
 
 export function applyTheme(theme: 'dark' | 'light') {
@@ -95,12 +101,12 @@ const TEAM_KEYWORDS: Record<string, string[]> = {
 }
 
 export function isSuggestedEvent(event: Event): boolean {
-  const text = `${event.title} ${event.tags.join(' ')} ${event.speakers.map(s => s.name).join(' ')}`.toLowerCase()
+  const text = `${event.title} ${event.description || ''} ${event.speakers.map(s => s.name).join(' ')}`.toLowerCase()
   return SYCO_KEYWORDS.filter(k => text.includes(k)).length >= 2
 }
 
 export function getEventPrimaryTeam(event: Event): string {
-  const text = `${event.title} ${event.tags.join(' ')}`.toLowerCase()
+  const text = `${event.title} ${event.description || ''}`.toLowerCase()
   let best = ''
   let bestScore = 0
   for (const [team, keywords] of Object.entries(TEAM_KEYWORDS)) {
@@ -109,4 +115,3 @@ export function getEventPrimaryTeam(event: Event): string {
   }
   return best
 }
-

@@ -2,8 +2,9 @@ import './styles/main.css'
 import Alpine from 'alpinejs'
 import { initApp } from './lib/nav'
 import { getMyEvents, getProfile } from './lib/store'
-import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, getEventDay, isSuggestedEvent, getEventPrimaryTeam } from './lib/utils'
-import type { Event, CategoryId } from './lib/types'
+import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, isSuggestedEvent, getEventPrimaryTeam } from './lib/utils'
+import { initEventModal, openEventModal, closeEventModal, modalToggleSave } from './lib/eventModal'
+import type { Event } from './lib/types'
 import eventsData from './data/events.json'
 
 const allEvents: Event[] = eventsData.events as Event[]
@@ -11,20 +12,25 @@ const allEvents: Event[] = eventsData.events as Event[]
 ;(window as any).Alpine = Alpine
 Alpine.start()
 
-// Determine current day for display
+initEventModal(allEvents, updateMyEventsSummary)
+
+;(window as any).openEventModal = openEventModal
+;(window as any).closeEventModal = closeEventModal
+;(window as any).modalToggleSave = modalToggleSave
+
 let currentDay = 1
 const today = new Date()
 if (today.getFullYear() === 2026 && today.getMonth() === 4 && today.getDate() === 20) {
   currentDay = 2
 }
 
-function renderEventCard(event: Event, compact = false): string {
+function renderEventCard(event: Event): string {
   const catId = primaryCategory(event)
   const catColor = CATEGORY_COLORS[catId] || '#888'
   const catLabel = CATEGORY_LABELS[catId] || catId
 
   return `
-    <div class="event-card" onclick="window.location.href='events.html?highlight=${event.id}'">
+    <div class="event-card cursor-pointer" onclick="openEventModal('${event.id}')">
       <div class="flex items-start justify-between gap-2">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1 flex-wrap">
@@ -45,32 +51,26 @@ function renderNowSection(day: number) {
   const now = new Date()
   let nowMins: number
 
-  // For demo/non-event days, show first events of the day
   if (today.getFullYear() === 2026 && today.getMonth() === 4 &&
       (today.getDate() === 19 || today.getDate() === 20)) {
     nowMins = now.getHours() * 60 + now.getMinutes()
   } else {
-    // Demo mode: show 11:30-12:00 slot
     nowMins = 11 * 60 + 45
   }
 
   const nowEvents = allEvents.filter(e => {
     if (e.date !== dateStr) return false
-    const start = e.startTime.split(':').map(Number)
-    const end = e.endTime.split(':').map(Number)
-    const startM = start[0] * 60 + start[1]
-    const endM = end[0] * 60 + end[1]
-    return nowMins >= startM && nowMins < endM
+    const [sh, sm] = e.startTime.split(':').map(Number)
+    const [eh, em] = e.endTime.split(':').map(Number)
+    return nowMins >= sh * 60 + sm && nowMins < eh * 60 + em
   })
 
   const container = document.getElementById('now-events')
   if (!container) return
 
-  if (nowEvents.length === 0) {
-    container.innerHTML = `<div class="event-card text-center py-5" style="color:var(--text-2);font-size:13px;">No events happening right now</div>`
-    return
-  }
-  container.innerHTML = nowEvents.map(e => renderEventCard(e)).join('')
+  container.innerHTML = nowEvents.length
+    ? nowEvents.map(e => renderEventCard(e)).join('')
+    : `<div class="event-card text-center py-5" style="color:var(--text-2);font-size:13px;">No events happening right now</div>`
 }
 
 function renderUpNext(day: number) {
@@ -86,8 +86,7 @@ function renderUpNext(day: number) {
     nowMins = 11 * 60 + 30
   }
 
-  // Prefer My Events, fallback to all
-  let source = myEventIds.length > 0
+  const source = myEventIds.length > 0
     ? allEvents.filter(e => myEventIds.includes(e.id) && e.date === dateStr)
     : allEvents.filter(e => e.date === dateStr)
 
@@ -106,13 +105,11 @@ function renderUpNext(day: number) {
   const container = document.getElementById('upnext-events')
   if (!container) return
 
-  if (upNext.length === 0) {
-    container.innerHTML = `<div class="event-card text-center py-5" style="color:var(--text-2);font-size:13px;">
-      No upcoming events<br><a href="events.html" style="color:var(--accent);font-size:12px;margin-top:6px;display:inline-block;">Browse all events →</a>
-    </div>`
-    return
-  }
-  container.innerHTML = upNext.map(e => renderEventCard(e)).join('')
+  container.innerHTML = upNext.length
+    ? upNext.map(e => renderEventCard(e)).join('')
+    : `<div class="event-card text-center py-5" style="color:var(--text-2);font-size:13px;">
+        No upcoming events<br><a href="events.html" style="color:var(--accent);font-size:12px;margin-top:6px;display:inline-block;">Browse all events →</a>
+      </div>`
 }
 
 const TEAM_LABELS: Record<string, string> = {
@@ -171,10 +168,8 @@ function updateMyEventsSummary() {
 
 ;(window as any).dashboardSetDay = (day: number) => {
   currentDay = day
-  const btn1 = document.getElementById('day1-btn')
-  const btn2 = document.getElementById('day2-btn')
-  btn1?.classList.toggle('active', day === 1)
-  btn2?.classList.toggle('active', day === 2)
+  document.getElementById('day1-btn')?.classList.toggle('active', day === 1)
+  document.getElementById('day2-btn')?.classList.toggle('active', day === 2)
 
   const subtitle = document.getElementById('header-subtitle')
   if (subtitle) subtitle.textContent = day === 1 ? 'Day 1 · May 19, 2026' : 'Day 2 · May 20, 2026'

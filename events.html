@@ -19,7 +19,6 @@
       <div class="text-xs" id="events-count" style="color:var(--text-2)">Loading…</div>
     </div>
     <div class="flex items-center gap-2">
-      <!-- View toggle -->
       <div class="flex rounded-lg overflow-hidden" style="border:1px solid var(--border)">
         <button id="view-list-btn" onclick="eventsSetView('list')" class="px-3 py-1.5 text-xs font-medium transition-colors" style="background:var(--accent);color:white">List</button>
         <button id="view-timeline-btn" onclick="eventsSetView('timeline')" class="px-3 py-1.5 text-xs font-medium transition-colors" style="background:var(--bg-surface);color:var(--text-2)">Timeline</button>
@@ -31,7 +30,7 @@
   </header>
 
   <!-- Sticky filter bar -->
-  <div id="filter-bar" class="sticky z-10 px-4 py-3 space-y-3" style="top:61px;background:var(--bg-header);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)">
+  <div id="filter-bar" class="sticky z-10 px-4 py-3 space-y-2" style="top:61px;background:var(--bg-header);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)">
     <!-- Search -->
     <input type="text" id="search-input" placeholder="Search events, speakers…" oninput="eventsFilter()" />
 
@@ -39,27 +38,48 @@
     <div class="flex gap-2 overflow-x-auto pb-1" style="-ms-overflow-style:none;scrollbar-width:none">
       <button onclick="eventsSetCategory('')" id="cat-all" class="filter-chip active flex-shrink-0">All</button>
       <button onclick="eventsSetSuggested()" id="cat-for-syco" class="filter-chip flex-shrink-0" style="border-color:var(--accent)">✨ For Syco</button>
-      <button onclick="eventsSetCategory('ai-play-stage')" id="cat-ai-play-stage" class="filter-chip flex-shrink-0">
-        <span class="w-2 h-2 rounded-full" style="background:#06b6d4"></span>AI Play Stage
+      <button onclick="eventsSetCategory('featured')" id="cat-featured" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#f59e0b"></span>Featured
       </button>
       <button onclick="eventsSetCategory('agentic-ai')" id="cat-agentic-ai" class="filter-chip flex-shrink-0">
         <span class="w-2 h-2 rounded-full" style="background:#8b5cf6"></span>Agentic AI
       </button>
-      <button onclick="eventsSetCategory('featured')" id="cat-featured" class="filter-chip flex-shrink-0">
-        <span class="w-2 h-2 rounded-full" style="background:#f59e0b"></span>Featured
+      <button onclick="eventsSetCategory('standup')" id="cat-standup" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#f97316"></span>Standup
+      </button>
+      <button onclick="eventsSetCategory('startup')" id="cat-startup" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#3b82f6"></span>Startup
+      </button>
+      <button onclick="eventsSetCategory('ai-play-stage')" id="cat-ai-play-stage" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#06b6d4"></span>AI Play Stage
       </button>
       <button onclick="eventsSetCategory('robotics')" id="cat-robotics" class="filter-chip flex-shrink-0">
         <span class="w-2 h-2 rounded-full" style="background:#10b981"></span>Robotics
       </button>
+      <button onclick="eventsSetCategory('healthcare')" id="cat-healthcare" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#14b8a6"></span>Healthcare
+      </button>
+      <button onclick="eventsSetCategory('regulation')" id="cat-regulation" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#64748b"></span>Regulation
+      </button>
       <button onclick="eventsSetCategory('podcast-tv-stage')" id="cat-podcast-tv-stage" class="filter-chip flex-shrink-0">
         <span class="w-2 h-2 rounded-full" style="background:#f43f5e"></span>Podcast/TV
       </button>
+      <button onclick="eventsSetCategory('meetup')" id="cat-meetup" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#a855f7"></span>Meetup
+      </button>
+      <button onclick="eventsSetCategory('ai-sport')" id="cat-ai-sport" class="filter-chip flex-shrink-0">
+        <span class="w-2 h-2 rounded-full" style="background:#22c55e"></span>AI Sport
+      </button>
     </div>
 
-    <!-- Day tabs (shown in timeline view too) -->
-    <div class="flex gap-2">
-      <button onclick="eventsSetDay(1)" id="day1-tab" class="filter-chip active flex-1 justify-center font-semibold">Day 1 · May 19</button>
-      <button onclick="eventsSetDay(2)" id="day2-tab" class="filter-chip flex-1 justify-center font-semibold">Day 2 · May 20</button>
+    <!-- Stage + Day row -->
+    <div class="flex gap-2 items-center">
+      <select id="stage-select" onchange="eventsSetStage(this.value)" class="flex-1 text-xs rounded-xl px-3 py-2 font-medium" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-1);outline:none;min-width:0">
+        <option value="">All Stages</option>
+      </select>
+      <button onclick="eventsSetDay(1)" id="day1-tab" class="filter-chip active flex-shrink-0 font-semibold text-xs">Day 1</button>
+      <button onclick="eventsSetDay(2)" id="day2-tab" class="filter-chip flex-shrink-0 font-semibold text-xs">Day 2</button>
     </div>
   </div>
 
@@ -82,9 +102,10 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <h2 id="modal-title" class="font-bold text-base leading-snug mb-3" style="color:var(--text-1)"></h2>
-      <div id="modal-time" class="text-sm font-semibold mb-2" style="color:var(--accent)"></div>
-      <div id="modal-stage" class="text-xs mb-4" style="color:var(--text-2)"></div>
+      <h2 id="modal-title" class="font-bold text-base leading-snug mb-2" style="color:var(--text-1)"></h2>
+      <div id="modal-time" class="text-sm font-semibold mb-1" style="color:var(--accent)"></div>
+      <div id="modal-stage" class="text-xs mb-3" style="color:var(--text-2)"></div>
+      <p id="modal-description" class="text-sm leading-relaxed mb-4" style="color:var(--text-2);display:none;white-space:pre-line"></p>
       <div id="modal-speakers" class="space-y-2 mb-5"></div>
       <button id="modal-save-btn" onclick="modalToggleSave()" class="btn-primary w-full">Save to My List</button>
     </div>

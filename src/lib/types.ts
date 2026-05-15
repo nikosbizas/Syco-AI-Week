@@ -1,7 +1,9 @@
 export interface Speaker {
+  id?: string
   name: string
   role: string
   company: string
+  photo?: string
 }
 
 export type CategoryId =
@@ -10,18 +12,26 @@ export type CategoryId =
   | 'featured'
   | 'robotics'
   | 'podcast-tv-stage'
+  | 'standup'
+  | 'startup'
+  | 'meetup'
+  | 'regulation'
+  | 'healthcare'
+  | 'ai-sport'
+  | 'charity'
+  | 'general'
 
 export interface Event {
   id: string
   title: string
+  description?: string
   speakers: Speaker[]
   date: string       // "2026-05-19"
   startTime: string  // "11:30"
   endTime: string    // "12:00"
   stage: string
   categories: CategoryId[]
-  tags: string[]
-  description?: string
+  day: number
 }
 
 export interface Note {

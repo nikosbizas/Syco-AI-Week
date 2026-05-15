@@ -1,8 +1,9 @@
 import './styles/main.css'
 import Alpine from 'alpinejs'
 import { initApp } from './lib/nav'
-import { getMyEvents, toggleMyEvent, isMyEvent } from './lib/store'
+import { getMyEvents, toggleMyEvent } from './lib/store'
 import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, hasConflict, timeToMinutes, isSuggestedEvent } from './lib/utils'
+import { initEventModal, openEventModal, closeEventModal, modalToggleSave } from './lib/eventModal'
 import type { Event, CategoryId } from './lib/types'
 import eventsData from './data/events.json'
 
@@ -11,11 +12,15 @@ const allEvents: Event[] = eventsData.events as Event[]
 ;(window as any).Alpine = Alpine
 Alpine.start()
 initApp('events')
+initEventModal(allEvents, () => render())
+
+// All unique stages for the filter dropdown
+const ALL_STAGES = [...new Set(allEvents.map(e => e.stage))].sort()
 
 let currentCategory: CategoryId | '' = ''
+let currentStage = ''
 let currentDay = 1
 let currentView: 'list' | 'timeline' = 'list'
-let currentModalEvent: Event | null = null
 let showSuggestedOnly = false
 
 // Parse URL params
@@ -23,6 +28,13 @@ const params = new URLSearchParams(window.location.search)
 const urlCat = params.get('category') as CategoryId | null
 if (urlCat) currentCategory = urlCat
 if (params.get('filter') === 'for-syco') showSuggestedOnly = true
+
+function buildStageSelect() {
+  const sel = document.getElementById('stage-select') as HTMLSelectElement
+  if (!sel) return
+  sel.innerHTML = `<option value="">All Stages</option>` +
+    ALL_STAGES.map(s => `<option value="${s}">${s}</option>`).join('')
+}
 
 function showToast(msg: string, color = 'var(--accent)') {
   const existing = document.querySelector('.toast')
@@ -44,8 +56,9 @@ function getFilteredEvents(): Event[] {
       if (e.date !== dateStr) return false
       if (showSuggestedOnly && !isSuggestedEvent(e)) return false
       if (currentCategory && !e.categories.includes(currentCategory)) return false
+      if (currentStage && e.stage !== currentStage) return false
       if (query) {
-        const searchStr = [e.title, ...e.speakers.map(s => s.name + ' ' + s.company)].join(' ').toLowerCase()
+        const searchStr = [e.title, e.description || '', ...e.speakers.map(s => s.name + ' ' + s.company)].join(' ').toLowerCase()
         if (!searchStr.includes(query)) return false
       }
       return true
@@ -102,9 +115,9 @@ function renderTimeline() {
   const container = document.getElementById('timeline-content')
   if (!container) return
 
-  // Time slots 10:00 - 19:00 in 30min increments
+  // Determine time range from actual events
   const slots: string[] = []
-  for (let h = 10; h <= 19; h++) {
+  for (let h = 9; h <= 19; h++) {
     slots.push(`${h.toString().padStart(2,'0')}:00`)
     if (h < 19) slots.push(`${h.toString().padStart(2,'0')}:30`)
   }
@@ -129,7 +142,7 @@ function renderTimeline() {
         <div class="flex-1 flex flex-col gap-1 min-h-[36px]">
           ${eventsInSlot.map(e => {
             const catId = primaryCategory(e)
-            const catColor = CATEGORY_COLORS[catId]
+            const catColor = CATEGORY_COLORS[catId] || '#888'
             const saved = myIds.includes(e.id)
             return `
               <div class="timeline-event-block cursor-pointer"
@@ -201,12 +214,16 @@ function render() {
   render()
 }
 
+;(window as any).eventsSetStage = (stage: string) => {
+  currentStage = stage
+  render()
+}
+
 ;(window as any).toggleSave = (id: string) => {
   const added = toggleMyEvent(id)
   const event = allEvents.find(e => e.id === id)
   if (event) {
     showToast(added ? `Saved: ${event.title.substring(0, 40)}…` : 'Removed from My List')
-    // Check for conflicts
     if (added) {
       const myIds = getMyEvents()
       if (hasConflict(event, myIds, allEvents)) {
@@ -217,63 +234,13 @@ function render() {
   render()
 }
 
-;(window as any).openEventModal = (id: string) => {
-  const event = allEvents.find(e => e.id === id)
-  if (!event) return
-  currentModalEvent = event
-
-  const catId = primaryCategory(event)
-  const catColor = CATEGORY_COLORS[catId]
-  const catLabel = CATEGORY_LABELS[catId]
-  const saved = isMyEvent(id)
-
-  const modalEl = document.getElementById('event-modal')
-  const titleEl = document.getElementById('modal-title')
-  const timeEl = document.getElementById('modal-time')
-  const stageEl = document.getElementById('modal-stage')
-  const speakersEl = document.getElementById('modal-speakers')
-  const catBadgeEl = document.getElementById('modal-cat-badge')
-  const saveBtn = document.getElementById('modal-save-btn')
-
-  if (catBadgeEl) catBadgeEl.innerHTML = `<span class="cat-badge cat-${catId}">${catLabel}</span>`
-  if (titleEl) titleEl.textContent = event.title
-  if (timeEl) timeEl.textContent = `${formatTime(event.startTime)} – ${formatTime(event.endTime)}`
-  if (stageEl) stageEl.textContent = event.stage + (event.date === '2026-05-19' ? ' · Day 1, May 19' : ' · Day 2, May 20')
-  if (speakersEl) {
-    speakersEl.innerHTML = event.speakers.map(s => `
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold" style="background:${catColor}22;color:${catColor}">${s.name.charAt(0)}</div>
-        <div>
-          <div class="text-sm font-medium" style="color:var(--text-1)">${s.name}</div>
-          <div class="text-xs" style="color:var(--text-2)">${[s.role, s.company].filter(Boolean).join(' · ')}</div>
-        </div>
-      </div>
-    `).join('')
-  }
-  if (saveBtn) {
-    saveBtn.textContent = saved ? '✓ In My List — Remove' : 'Save to My List'
-    saveBtn.style.background = saved ? 'var(--bg-elevated)' : 'var(--accent)'
-    saveBtn.style.border = saved ? '1px solid var(--accent)' : 'none'
-    saveBtn.style.color = saved ? 'var(--accent)' : 'white'
-  }
-  modalEl?.classList.add('is-open')
-}
-
-;(window as any).closeEventModal = (e?: MouseEvent) => {
-  if (!e || e.target === document.getElementById('event-modal')) {
-    document.getElementById('event-modal')?.classList.remove('is-open')
-  }
-}
-
-;(window as any).modalToggleSave = () => {
-  if (!currentModalEvent) return
-  const added = toggleMyEvent(currentModalEvent.id)
-  ;(window as any).openEventModal(currentModalEvent.id)
-  render()
-  showToast(added ? 'Saved to My List' : 'Removed from My List')
-}
+;(window as any).openEventModal = openEventModal
+;(window as any).closeEventModal = closeEventModal
+;(window as any).modalToggleSave = modalToggleSave
 
 // Init
+buildStageSelect()
+
 if (showSuggestedOnly) {
   document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
   document.getElementById('cat-for-syco')?.classList.add('active')
@@ -284,7 +251,6 @@ if (showSuggestedOnly) {
   render()
 }
 
-// Set active day based on today
 const today = new Date()
 if (today.getFullYear() === 2026 && today.getMonth() === 4 && today.getDate() === 20) {
   ;(window as any).eventsSetDay(2)
