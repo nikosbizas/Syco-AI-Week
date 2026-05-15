@@ -84,20 +84,86 @@ export function applyAccentColor(accent: string) {
 
 // ─── Suggestions ─────────────────────────────────────────────────────────────
 
+// What makes an event relevant for Syco (creative agency)
 const SYCO_KEYWORDS = [
-  'design', 'creative', 'visual', 'brand', 'generative', 'image', 'video', 'motion',
-  'content', 'marketing', 'social', 'copy', 'writing', 'storytelling', 'campaign',
-  'influencer', 'creator', 'newsletter', 'strategy',
-  'developer', 'development', 'engineering', 'agent', 'automation', 'workflow',
-  'code', 'api', 'integration', 'tool', 'platform', 'saas',
-  'agency', 'productivity', 'collaboration',
+  // Marketing & digital presence
+  'marketing', 'advertising', 'campaign', 'audience', 'brand',
+  'social media', 'content creation', 'content marketing', 'influencer',
+  'seo', 'geo ', 'organic', 'search optim', 'visibility',
+  'awareness', 'engagement', 'conversion',
+  // Creative production
+  'creative', 'design', 'visual', 'generative',
+  'image', 'video', 'animation',
+  'commercial', 'commercials', 'storytelling',
+  'diffusion', 'midjourney', 'runway',
+  'creative direction', 'art direction',
+  // Agency & client business
+  'agency', 'agencies', 'client', 'pitch', 'new business',
+  'revenue stream', 'roi', 'selling',
+  // Tools for creative teams & dev workflow
+  'workflow', 'no-code', 'prompt', 'productivity',
+  'creative brief', 'dal brief',
+  'coding', 'claude code', 'vibe coding',
 ]
 
 const TEAM_KEYWORDS: Record<string, string[]> = {
-  'creative-design': ['design', 'creative', 'visual', 'brand', 'generative', 'image', 'video', 'motion', 'art', 'graphic', 'runway', 'midjourney'],
-  'social-content':  ['content', 'marketing', 'social', 'copy', 'writing', 'storytelling', 'campaign', 'newsletter', 'creator', 'ugc', 'influencer'],
-  'development':     ['developer', 'development', 'engineering', 'agent', 'automation', 'code', 'api', 'integration', 'workflow', 'tool', 'platform'],
-  'account':         ['client', 'roi', 'strategy', 'pitch', 'agency', 'business', 'management', 'brand', 'partnership', 'growth', 'sales'],
+  // Social/Content: advertising, digital presence, brand voice, SEO/GEO
+  'social-content': [
+    'social media', 'paid social', 'social network',
+    'advertising', 'digital advertising', 'ad campaign', 'ads ',
+    'content creation', 'content marketing', 'content strategy', 'editorial',
+    'newsletter', 'email campaign', 'copywriting', 'copywriter',
+    'influencer', 'creator economy', 'ugc',
+    'seo', 'geo ', 'organic search', 'search optim', 'answer engine',
+    'audience', 'engagement', 'community management',
+    'brand awareness', 'brand voice', 'brand relevance',
+    'commercial', 'commercials',
+    'awareness', 'consideration',
+    'digital marketing', 'performance marketing',
+    'tiktok', 'instagram', 'linkedin', 'youtube',
+  ],
+  // Creative/Design: craft, visual production, AI creative tools
+  'creative-design': [
+    'creative', 'visual', 'generative',
+    'image', 'video', 'animation',
+    'creative direction', 'creative director', 'augmented creative',
+    'art direction', 'art director',
+    'visual identity', 'brand identity', 'graphic design', 'typography',
+    'diffusion', 'midjourney', 'runway', 'stable diffusion', 'higgsfield',
+    'image generation', 'image synthesis', 'video generation',
+    'motion graphic', 'animation studio', 'cinematic',
+    'design system', 'ui design', 'ux design', 'illustration',
+    'creative brief', 'dal brief', 'brief alla campagna',
+    'creative workflow', 'generative art', 'generative image',
+    'prompt engineering', 'augmented direction',
+    'color grading', 'visual storytelling', 'sketch',
+  ],
+  // Development: building, coding, integrations, AI dev tools
+  'development': [
+    'mcp', 'model context protocol',
+    'claude code', 'vibe coding', 'cursor ai',
+    'no-code', 'nocode', 'low-code',
+    'rag ', 'retrieval augmented', 'vector database',
+    'api ', 'sdk ', 'open source',
+    'code generation', 'pair programming', 'copilot',
+    'deployment', 'devops', 'ci/cd', 'github',
+    'prompt to production', 'agentic development',
+    'agentic self-healing', 'agent framework',
+    'developer experience', 'build ai',
+  ],
+  // Account: agency business model, client strategy, new revenue, pitching
+  'account': [
+    'agency', 'agencies', 'post-agency', 'agentification',
+    'client service', 'client relation',
+    'new business', 'pitch', 'b2b',
+    'revenue stream', 'new revenue', 'monetiz',
+    'selling', 'sales methodology', 'sales team',
+    'roi', 'return on investment',
+    'marketing agency', 'creative agency',
+    'professional services', 'consultancy',
+    'business case', 'from agencies to agents',
+    'winning client', 'c-suite', 'cmo', 'cdo',
+  ],
 }
 
 export function isSuggestedEvent(event: Event): boolean {
@@ -113,5 +179,6 @@ export function getEventPrimaryTeam(event: Event): string {
     const score = keywords.filter(k => text.includes(k)).length
     if (score > bestScore) { bestScore = score; best = team }
   }
-  return best
+  // Only assign team if at least 1 specific keyword matched
+  return bestScore >= 1 ? best : ''
 }
