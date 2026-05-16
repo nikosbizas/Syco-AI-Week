@@ -182,3 +182,37 @@ export function getEventPrimaryTeam(event: Event): string {
   // Only assign team if at least 1 specific keyword matched
   return bestScore >= 1 ? best : ''
 }
+
+export interface EventColumn {
+  event: Event
+  col: number
+  totalCols: number
+}
+
+export function calculateColumns(events: Event[]): EventColumn[] {
+  if (!events.length) return []
+  const sorted = [...events].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))
+  const cols: number[] = new Array(sorted.length).fill(0)
+  const colEnds: number[] = []
+
+  for (let i = 0; i < sorted.length; i++) {
+    const start = timeToMinutes(sorted[i].startTime)
+    let c = -1
+    for (let ci = 0; ci < colEnds.length; ci++) {
+      if (colEnds[ci] <= start) { c = ci; break }
+    }
+    if (c === -1) c = colEnds.length
+    cols[i] = c
+    colEnds[c] = timeToMinutes(sorted[i].endTime)
+  }
+
+  const result: EventColumn[] = sorted.map((event, i) => ({ event, col: cols[i], totalCols: 1 }))
+  for (let i = 0; i < result.length; i++) {
+    let maxCol = result[i].col
+    for (let j = 0; j < result.length; j++) {
+      if (i !== j && eventsOverlap(result[i].event, result[j].event)) maxCol = Math.max(maxCol, result[j].col)
+    }
+    result[i].totalCols = maxCol + 1
+  }
+  return result
+}

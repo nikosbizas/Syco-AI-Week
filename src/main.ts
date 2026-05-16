@@ -3,7 +3,7 @@ import Alpine from 'alpinejs'
 import { initApp } from './lib/nav'
 import { getMyEvents, getProfile } from './lib/store'
 import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, isSuggestedEvent, getEventPrimaryTeam } from './lib/utils'
-import { initEventModal, openEventModal, closeEventModal, modalToggleSave } from './lib/eventModal'
+import { initEventModal, openEventModal, closeEventModal, modalToggleSave, setModalNavList, modalNavPrev, modalNavNext } from './lib/eventModal'
 import type { Event } from './lib/types'
 import eventsData from './data/events.json'
 
@@ -17,6 +17,8 @@ initEventModal(allEvents, updateMyEventsSummary)
 ;(window as any).openEventModal = openEventModal
 ;(window as any).closeEventModal = closeEventModal
 ;(window as any).modalToggleSave = modalToggleSave
+;(window as any).modalNavPrev = modalNavPrev
+;(window as any).modalNavNext = modalNavNext
 
 // ─── Time helpers ────────────────────────────────────────────────────────────
 
@@ -232,6 +234,14 @@ function updateMyEventsSummary() {
   renderNowSection(day)
   renderUpNext(day)
   renderSuggested(day)
+
+  const dateStr = day === 1 ? '2026-05-19' : '2026-05-20'
+  setModalNavList(
+    allEvents
+      .filter(e => e.date === dateStr)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime))
+      .map(e => e.id)
+  )
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────

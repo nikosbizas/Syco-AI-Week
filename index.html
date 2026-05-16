@@ -130,6 +130,15 @@
       <div id="modal-stage" class="text-xs mb-3" style="color:var(--text-2)"></div>
       <p id="modal-description" class="text-sm leading-relaxed mb-4" style="color:var(--text-2);display:none;white-space:pre-line"></p>
       <div id="modal-speakers" class="space-y-2 mb-5"></div>
+      <div id="modal-nav" class="flex items-center gap-2 mb-4" style="display:none">
+        <button id="modal-prev-btn" onclick="modalNavPrev()" class="btn-icon flex-shrink-0" title="Previous event">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span id="modal-nav-pos" class="flex-1 text-center text-xs" style="color:var(--text-2)"></span>
+        <button id="modal-next-btn" onclick="modalNavNext()" class="btn-icon flex-shrink-0" title="Next event">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
       <button id="modal-save-btn" onclick="modalToggleSave()" class="btn-primary w-full">Save to My List</button>
     </div>
   </div>

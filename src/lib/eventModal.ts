@@ -5,10 +5,92 @@ import type { Event } from './types'
 let _allEvents: Event[] = []
 let _currentEvent: Event | null = null
 let _onAfterToggle: (() => void) | null = null
+let _navList: string[] = []
+let _animating = false
+
+export function setModalNavList(ids: string[]) {
+  _navList = ids
+}
+
+export function modalNavPrev() {
+  if (!_currentEvent) return
+  const idx = _navList.indexOf(_currentEvent.id)
+  if (idx <= 0) return
+  const newId = _navList[idx - 1]
+  animateNav('right', () => openEventModal(newId))
+}
+
+export function modalNavNext() {
+  if (!_currentEvent) return
+  const idx = _navList.indexOf(_currentEvent.id)
+  if (idx === -1 || idx >= _navList.length - 1) return
+  const newId = _navList[idx + 1]
+  animateNav('left', () => openEventModal(newId))
+}
+
+function animateNav(direction: 'left' | 'right', callback: () => void) {
+  if (_animating) return
+  _animating = true
+  setTimeout(() => { _animating = false }, 280)
+
+  const sheet = document.querySelector('#event-modal .modal-sheet') as HTMLElement | null
+  if (!sheet) {
+    callback()
+    return
+  }
+
+  // Exit: slide out in the given direction
+  const exitX = direction === 'left' ? '-50px' : '50px'
+  sheet.style.transition = 'transform 0.12s ease-in, opacity 0.12s ease-in'
+  sheet.style.transform = `translateX(${exitX})`
+  sheet.style.opacity = '0'
+
+  setTimeout(() => {
+    // Run callback to update content
+    callback()
+
+    // Enter: start from opposite side
+    const enterX = direction === 'left' ? '50px' : '-50px'
+    sheet.style.transition = 'none'
+    sheet.style.transform = `translateX(${enterX})`
+    sheet.style.opacity = '0'
+
+    // Force reflow
+    void sheet.offsetHeight
+
+    // Animate to final position
+    sheet.style.transition = 'transform 0.15s ease-out, opacity 0.15s ease-out'
+    sheet.style.transform = 'translateX(0)'
+    sheet.style.opacity = '1'
+  }, 130)
+}
 
 export function initEventModal(events: Event[], onAfterToggle?: () => void) {
   _allEvents = events
   if (onAfterToggle) _onAfterToggle = onAfterToggle
+
+  const sheet = document.querySelector('#event-modal .modal-sheet') as HTMLElement | null
+  if (sheet) {
+    let touchStartX = 0
+    let touchStartY = 0
+
+    sheet.addEventListener('touchstart', (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX
+      touchStartY = e.touches[0].clientY
+    }, { passive: true })
+
+    sheet.addEventListener('touchend', (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - touchStartX
+      const dy = e.changedTouches[0].clientY - touchStartY
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        if (dx < 0) {
+          modalNavNext()
+        } else {
+          modalNavPrev()
+        }
+      }
+    }, { passive: true })
+  }
 }
 
 export function openEventModal(id: string) {
@@ -67,6 +149,28 @@ export function openEventModal(id: string) {
     saveBtn.style.cssText = saved
       ? 'background:var(--bg-elevated);border:1px solid var(--accent);color:var(--accent)'
       : 'background:var(--accent);border:none;color:white'
+  }
+
+  // Update nav UI
+  const navEl     = document.getElementById('modal-nav')
+  const navPosEl  = document.getElementById('modal-nav-pos')
+  const prevBtn   = document.getElementById('modal-prev-btn') as HTMLButtonElement | null
+  const nextBtn   = document.getElementById('modal-next-btn') as HTMLButtonElement | null
+  const idx = _navList.indexOf(id)
+
+  if (_navList.length > 1 && idx !== -1) {
+    if (navEl) navEl.style.display = 'flex'
+    if (navPosEl) navPosEl.textContent = `${idx + 1} / ${_navList.length}`
+    if (prevBtn) {
+      prevBtn.disabled = idx === 0
+      prevBtn.style.opacity = idx === 0 ? '0.3' : '1'
+    }
+    if (nextBtn) {
+      nextBtn.disabled = idx === _navList.length - 1
+      nextBtn.style.opacity = idx === _navList.length - 1 ? '0.3' : '1'
+    }
+  } else {
+    if (navEl) navEl.style.display = 'none'
   }
 
   modalEl?.classList.add('is-open')

@@ -2,8 +2,8 @@ import './styles/main.css'
 import Alpine from 'alpinejs'
 import { initApp } from './lib/nav'
 import { getMyEvents, setMyEvents, getNoteForEvent, saveNote } from './lib/store'
-import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, eventsOverlap, timeToMinutes } from './lib/utils'
-import { initEventModal, openEventModal, closeEventModal, modalToggleSave } from './lib/eventModal'
+import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, eventsOverlap, timeToMinutes, calculateColumns } from './lib/utils'
+import { initEventModal, openEventModal, closeEventModal, modalToggleSave, setModalNavList, modalNavPrev, modalNavNext } from './lib/eventModal'
 import type { Event } from './lib/types'
 import eventsData from './data/events.json'
 
@@ -17,6 +17,8 @@ initEventModal(allEvents, () => renderMyEvents())
 ;(window as any).openEventModal = openEventModal
 ;(window as any).closeEventModal = closeEventModal
 ;(window as any).modalToggleSave = modalToggleSave
+;(window as any).modalNavPrev = modalNavPrev
+;(window as any).modalNavNext = modalNavNext
 
 let currentView: 'list' | 'timeline' = 'list'
 let currentDay = 1
@@ -69,6 +71,8 @@ function renderList() {
 
   const container = document.getElementById('myevents-content')
   if (!container) return
+
+  setModalNavList(myEvents.map(e => e.id))
 
   if (myIds.length === 0) {
     container.innerHTML = `
@@ -144,6 +148,8 @@ function renderTimeline() {
     .filter(e => myIds.includes(e.id) && e.date === dateStr)
     .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))
 
+  setModalNavList(myEvents.map(e => e.id))
+
   const container = document.getElementById('timeline-content')
   if (!container) return
 
@@ -162,43 +168,49 @@ function renderTimeline() {
     return
   }
 
-  const slots: string[] = []
-  for (let h = 9; h <= 19; h++) {
-    slots.push(`${h.toString().padStart(2, '0')}:00`)
-    if (h < 19) slots.push(`${h.toString().padStart(2, '0')}:30`)
-  }
+  const HOUR_H = 80
+  const TSTART = 9 * 60
+  const GUTTER = 44
+  const PX_MIN = HOUR_H / 60
 
-  const slotsHtml = slots.map(slot => {
-    const slotMins = timeToMinutes(slot)
-    const eventsInSlot = myEvents.filter(e => {
-      const start = timeToMinutes(e.startTime)
-      const end = timeToMinutes(e.endTime)
-      return start <= slotMins && end > slotMins
-    })
-    const isHalf = slot.endsWith(':30')
-
-    return `
-      <div class="flex items-start gap-2 min-h-[52px] py-1" style="border-bottom:1px solid var(--border)">
-        <div class="text-xs flex-shrink-0 w-12 pt-1" style="color:var(--text-2);text-align:right">${!isHalf ? slot : ''}</div>
-        <div class="flex-1 flex flex-col gap-1 min-h-[36px]">
-          ${eventsInSlot.map(e => {
-            const catId = primaryCategory(e)
-            const catColor = CATEGORY_COLORS[catId] || '#888'
-            return `
-              <div class="timeline-event-block cursor-pointer"
-                   style="background:${catColor}22;color:${catColor};border-left:3px solid ${catColor};box-shadow:0 0 0 1px ${catColor}"
-                   onclick="openEventModal('${e.id}')">
-                <span class="font-semibold">${formatTime(e.startTime)}</span>
-                <span class="ml-1 opacity-90">${e.title.substring(0, 45)}${e.title.length > 45 ? '…' : ''}</span>
-              </div>
-            `
-          }).join('')}
-        </div>
-      </div>
-    `
+  const hoursHtml = Array.from({ length: 12 }, (_, i) => {
+    const h = 9 + i
+    const top = i * HOUR_H
+    return `<div style="position:absolute;top:${top}px;left:0;right:0;display:flex;align-items:flex-start;pointer-events:none">
+      <span style="width:${GUTTER}px;flex-shrink:0;font-size:10px;color:var(--text-2);text-align:right;padding-right:6px;margin-top:-7px">${h.toString().padStart(2, '0')}:00</span>
+      <div style="flex:1;border-top:1px solid var(--border)"></div>
+    </div>`
   }).join('')
 
-  container.innerHTML = slotsHtml
+  const halfHtml = Array.from({ length: 11 }, (_, i) => {
+    const top = i * HOUR_H + HOUR_H / 2
+    return `<div style="position:absolute;top:${top}px;left:${GUTTER}px;right:0;border-top:1px dashed var(--border);opacity:0.3;pointer-events:none"></div>`
+  }).join('')
+
+  const positioned = calculateColumns(myEvents)
+  const blocksHtml = positioned.map(({ event: e, col, totalCols }) => {
+    const catId = primaryCategory(e)
+    const catColor = CATEGORY_COLORS[catId] || '#888'
+    const catLabel = CATEGORY_LABELS[catId] || catId
+    const note = getNoteForEvent(e.id)
+    const hasNote = note.text || note.images.length > 0 || note.audioUrl
+    const startMins = timeToMinutes(e.startTime) - TSTART
+    const durMins = timeToMinutes(e.endTime) - timeToMinutes(e.startTime)
+    const top = startMins * PX_MIN
+    const height = Math.max(durMins * PX_MIN, 22)
+    const left = `calc(${GUTTER}px + (100% - ${GUTTER}px) * ${col} / ${totalCols} + 2px)`
+    const width = `calc((100% - ${GUTTER}px) / ${totalCols} - 4px)`
+    return `<div class="cursor-pointer" onclick="openEventModal('${e.id}')"
+         style="position:absolute;top:${top}px;left:${left};width:${width};height:${height}px;
+                background:${catColor}22;border-left:3px solid ${catColor};color:${catColor};
+                border-radius:4px;padding:3px 6px;overflow:hidden;
+                box-shadow:0 0 0 1px ${catColor}">
+      <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3">${formatTime(e.startTime)} ${e.title}${hasNote ? ' 📝' : ''}</div>
+      ${height >= 30 ? `<div style="font-size:10px;opacity:0.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3">${catLabel} · ${e.stage}</div>` : ''}
+    </div>`
+  }).join('')
+
+  container.innerHTML = `<div style="position:relative;height:${11 * HOUR_H}px">${hoursHtml}${halfHtml}${blocksHtml}</div>`
 }
 
 // ─── View / day switchers ─────────────────────────────────────────────────────
