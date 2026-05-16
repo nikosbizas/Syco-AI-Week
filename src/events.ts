@@ -1,8 +1,8 @@
 import './styles/main.css'
 import Alpine from 'alpinejs'
 import { initApp } from './lib/nav'
-import { getMyEvents, toggleMyEvent } from './lib/store'
-import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, hasConflict, timeToMinutes, isSuggestedEvent } from './lib/utils'
+import { getMyEvents, toggleMyEvent, getProfile } from './lib/store'
+import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, hasConflict, timeToMinutes, isSuggestedEvent, getEventPrimaryTeam } from './lib/utils'
 import { initEventModal, openEventModal, closeEventModal, modalToggleSave } from './lib/eventModal'
 import type { Event, CategoryId } from './lib/types'
 import eventsData from './data/events.json'
@@ -17,23 +17,52 @@ initEventModal(allEvents, () => render())
 // All unique stages for the filter dropdown
 const ALL_STAGES = [...new Set(allEvents.map(e => e.stage))].sort()
 
+const TEAM_CHIP_LABELS: Record<string, string> = {
+  'social-content':  '✨ For Social',
+  'creative-design': '✨ For Creative',
+  'development':     '✨ For Dev',
+  'account':         '✨ For Account',
+}
+
 let currentCategory: CategoryId | '' = ''
 let currentStage = ''
 let currentDay = 1
 let currentView: 'list' | 'timeline' = 'list'
 let showSuggestedOnly = false
+let showTeamOnly = false
 
 // Parse URL params
 const params = new URLSearchParams(window.location.search)
 const urlCat = params.get('category') as CategoryId | null
 if (urlCat) currentCategory = urlCat
 if (params.get('filter') === 'for-syco') showSuggestedOnly = true
+if (params.get('filter') === 'for-team') showTeamOnly = true
 
 function buildStageSelect() {
   const sel = document.getElementById('stage-select') as HTMLSelectElement
   if (!sel) return
   sel.innerHTML = `<option value="">All Stages</option>` +
     ALL_STAGES.map(s => `<option value="${s}">${s}</option>`).join('')
+}
+
+function buildTeamChip() {
+  const profile = getProfile()
+  if (!profile.role) return
+
+  const label = TEAM_CHIP_LABELS[profile.role]
+  if (!label) return
+
+  // Insert chip after the "For Syco" chip
+  const forSycoBtn = document.getElementById('cat-for-syco')
+  if (!forSycoBtn || document.getElementById('cat-for-team')) return
+
+  const btn = document.createElement('button')
+  btn.id = 'cat-for-team'
+  btn.className = 'filter-chip flex-shrink-0'
+  btn.style.borderColor = 'var(--accent)'
+  btn.textContent = label
+  btn.onclick = () => (window as any).eventsSetTeam()
+  forSycoBtn.insertAdjacentElement('afterend', btn)
 }
 
 function showToast(msg: string, color = 'var(--accent)') {
@@ -50,11 +79,17 @@ function showToast(msg: string, color = 'var(--accent)') {
 function getFilteredEvents(): Event[] {
   const dateStr = currentDay === 1 ? '2026-05-19' : '2026-05-20'
   const query = (document.getElementById('search-input') as HTMLInputElement)?.value.toLowerCase() || ''
+  const profile = getProfile()
 
   return allEvents
     .filter(e => {
       if (e.date !== dateStr) return false
       if (showSuggestedOnly && !isSuggestedEvent(e)) return false
+      if (showTeamOnly) {
+        if (!isSuggestedEvent(e)) return false
+        const team = getEventPrimaryTeam(e)
+        if (team && team !== profile.role) return false
+      }
       if (currentCategory && !e.categories.includes(currentCategory)) return false
       if (currentStage && e.stage !== currentStage) return false
       if (query) {
@@ -175,6 +210,7 @@ function render() {
 ;(window as any).eventsSetCategory = (cat: CategoryId | '') => {
   currentCategory = cat
   showSuggestedOnly = false
+  showTeamOnly = false
   document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
   document.getElementById(cat ? `cat-${cat}` : 'cat-all')?.classList.add('active')
   render()
@@ -182,9 +218,19 @@ function render() {
 
 ;(window as any).eventsSetSuggested = () => {
   showSuggestedOnly = true
+  showTeamOnly = false
   currentCategory = ''
   document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
   document.getElementById('cat-for-syco')?.classList.add('active')
+  render()
+}
+
+;(window as any).eventsSetTeam = () => {
+  showTeamOnly = true
+  showSuggestedOnly = false
+  currentCategory = ''
+  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
+  document.getElementById('cat-for-team')?.classList.add('active')
   render()
 }
 
@@ -240,8 +286,11 @@ function render() {
 
 // Init
 buildStageSelect()
+buildTeamChip()
 
-if (showSuggestedOnly) {
+if (showTeamOnly) {
+  ;(window as any).eventsSetTeam()
+} else if (showSuggestedOnly) {
   document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
   document.getElementById('cat-for-syco')?.classList.add('active')
   render()

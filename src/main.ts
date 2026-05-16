@@ -18,11 +18,39 @@ initEventModal(allEvents, updateMyEventsSummary)
 ;(window as any).closeEventModal = closeEventModal
 ;(window as any).modalToggleSave = modalToggleSave
 
+// ─── Time helpers ────────────────────────────────────────────────────────────
+
+const EVENT_START = new Date(2026, 4, 19, 9, 0)   // May 19 09:00 local
+const EVENT_END   = new Date(2026, 4, 20, 20, 0)  // May 20 20:00 local
+
+function getDeviceDayStatus(day: number): 'live' | 'other-day' | 'before' | 'after' {
+  const now = new Date()
+  const targetDate = day === 1 ? 19 : 20
+
+  if (now.getFullYear() === 2026 && now.getMonth() === 4 && now.getDate() === targetDate) {
+    return 'live'
+  }
+  if (now < EVENT_START) return 'before'
+  if (now > EVENT_END)   return 'after'
+  return 'other-day'
+}
+
+function daysUntilEvent(): number {
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const start = new Date(2026, 4, 19)
+  return Math.ceil((start.getTime() - now.getTime()) / 86400000)
+}
+
+// ─── Auto-select current day ──────────────────────────────────────────────────
+
 let currentDay = 1
-const today = new Date()
-if (today.getFullYear() === 2026 && today.getMonth() === 4 && today.getDate() === 20) {
+const now = new Date()
+if (now.getFullYear() === 2026 && now.getMonth() === 4 && now.getDate() === 20) {
   currentDay = 2
 }
+
+// ─── Render helpers ───────────────────────────────────────────────────────────
 
 function renderEventCard(event: Event): string {
   const catId = primaryCategory(event)
@@ -46,17 +74,37 @@ function renderEventCard(event: Event): string {
   `
 }
 
-function renderNowSection(day: number) {
-  const dateStr = day === 1 ? '2026-05-19' : '2026-05-20'
-  const now = new Date()
-  let nowMins: number
+function emptyCard(msg: string): string {
+  return `<div class="event-card text-center py-5" style="color:var(--text-2);font-size:13px">${msg}</div>`
+}
 
-  if (today.getFullYear() === 2026 && today.getMonth() === 4 &&
-      (today.getDate() === 19 || today.getDate() === 20)) {
-    nowMins = now.getHours() * 60 + now.getMinutes()
-  } else {
-    nowMins = 11 * 60 + 45
+// ─── Now section ──────────────────────────────────────────────────────────────
+
+function renderNowSection(day: number) {
+  const container = document.getElementById('now-events')
+  if (!container) return
+
+  const status = getDeviceDayStatus(day)
+
+  if (status !== 'live') {
+    if (status === 'before') {
+      const d = daysUntilEvent()
+      container.innerHTML = emptyCard(`Event starts in ${d} day${d !== 1 ? 's' : ''} · May 19–20, Fiera Milano`)
+    } else if (status === 'after') {
+      container.innerHTML = emptyCard('Event has ended. See you next year!')
+    } else {
+      // other-day: user selected a day that isn't today
+      const liveDay = now.getDate() === 19 ? 1 : 2
+      container.innerHTML = emptyCard(
+        `Today is Day ${liveDay} — <a href="#" onclick="dashboardSetDay(${liveDay});return false" style="color:var(--accent)">switch to Day ${liveDay}</a> to see live events`
+      )
+    }
+    return
   }
+
+  // Live: compare real device time with event times
+  const dateStr = day === 1 ? '2026-05-19' : '2026-05-20'
+  const nowMins = now.getHours() * 60 + now.getMinutes()
 
   const nowEvents = allEvents.filter(e => {
     if (e.date !== dateStr) return false
@@ -65,25 +113,29 @@ function renderNowSection(day: number) {
     return nowMins >= sh * 60 + sm && nowMins < eh * 60 + em
   })
 
-  const container = document.getElementById('now-events')
-  if (!container) return
-
   container.innerHTML = nowEvents.length
     ? nowEvents.map(e => renderEventCard(e)).join('')
-    : `<div class="event-card text-center py-5" style="color:var(--text-2);font-size:13px;">No events happening right now</div>`
+    : emptyCard('No events happening right now')
 }
 
+// ─── Up Next section ──────────────────────────────────────────────────────────
+
 function renderUpNext(day: number) {
+  const container = document.getElementById('upnext-events')
+  if (!container) return
+
+  const status = getDeviceDayStatus(day)
   const dateStr = day === 1 ? '2026-05-19' : '2026-05-20'
   const myEventIds = getMyEvents()
-  const now = new Date()
-  let nowMins: number
 
-  if (today.getFullYear() === 2026 && today.getMonth() === 4 &&
-      (today.getDate() === 19 || today.getDate() === 20)) {
+  let nowMins: number
+  if (status === 'live') {
     nowMins = now.getHours() * 60 + now.getMinutes()
+  } else if (status === 'before' || status === 'other-day') {
+    nowMins = 0  // show all upcoming events from the start of the day
   } else {
-    nowMins = 11 * 60 + 30
+    container.innerHTML = emptyCard('Event has ended.')
+    return
   }
 
   const source = myEventIds.length > 0
@@ -98,12 +150,9 @@ function renderUpNext(day: number) {
     .sort((a, b) => {
       const [ah, am] = a.startTime.split(':').map(Number)
       const [bh, bm] = b.startTime.split(':').map(Number)
-      return (ah * 60 + am) - (bh * 60 + bm)
+      return ah * 60 + am - (bh * 60 + bm)
     })
     .slice(0, 3)
-
-  const container = document.getElementById('upnext-events')
-  if (!container) return
 
   container.innerHTML = upNext.length
     ? upNext.map(e => renderEventCard(e)).join('')
@@ -111,6 +160,8 @@ function renderUpNext(day: number) {
         No upcoming events<br><a href="events.html" style="color:var(--accent);font-size:12px;margin-top:6px;display:inline-block;">Browse all events →</a>
       </div>`
 }
+
+// ─── Suggested section ────────────────────────────────────────────────────────
 
 const TEAM_LABELS: Record<string, string> = {
   'social-content':  'FOR SOCIAL / CONTENT',
@@ -148,8 +199,10 @@ function renderSuggested(day: number) {
 
   container.innerHTML = suggestions.length
     ? suggestions.map(e => renderEventCard(e)).join('')
-    : `<div class="event-card text-center py-5" style="color:var(--text-2);font-size:13px;">No specific picks for your team on this day</div>`
+    : emptyCard('No specific picks for your team on this day')
 }
+
+// ─── My Events summary ────────────────────────────────────────────────────────
 
 function updateMyEventsSummary() {
   const count = getMyEvents().length
@@ -166,6 +219,8 @@ function updateMyEventsSummary() {
   }
 }
 
+// ─── Day switcher ─────────────────────────────────────────────────────────────
+
 ;(window as any).dashboardSetDay = (day: number) => {
   currentDay = day
   document.getElementById('day1-btn')?.classList.toggle('active', day === 1)
@@ -178,6 +233,8 @@ function updateMyEventsSummary() {
   renderUpNext(day)
   renderSuggested(day)
 }
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
 
 initApp('dashboard')
 ;(window as any).dashboardSetDay(currentDay)
