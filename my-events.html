@@ -23,8 +23,50 @@
   </header>
 
   <main class="px-4 py-4 max-w-lg mx-auto">
-    <div id="myevents-content"></div>
+
+    <!-- Day tabs + View toggle -->
+    <div class="flex gap-2 mb-3">
+      <button id="day1-tab" onclick="myEventsSetDay(1)" class="filter-chip flex-1 justify-center text-sm font-semibold">
+        Day 1 · May 19
+      </button>
+      <button id="day2-tab" onclick="myEventsSetDay(2)" class="filter-chip flex-1 justify-center text-sm font-semibold">
+        Day 2 · May 20
+      </button>
+    </div>
+    <div class="flex gap-1 mb-4 rounded-xl p-1" style="background:var(--bg-surface)">
+      <button id="view-list-btn" onclick="myEventsSetView('list')" class="flex-1 py-2 text-xs font-semibold rounded-lg" style="background:var(--accent);color:white">List</button>
+      <button id="view-timeline-btn" onclick="myEventsSetView('timeline')" class="flex-1 py-2 text-xs font-semibold rounded-lg" style="color:var(--text-2)">Timeline</button>
+    </div>
+
+    <!-- List view -->
+    <div id="list-view">
+      <div id="myevents-content" class="space-y-3"></div>
+    </div>
+
+    <!-- Timeline view -->
+    <div id="timeline-view" class="hidden">
+      <div id="timeline-content"></div>
+    </div>
+
   </main>
+
+  <!-- Event Detail Modal -->
+  <div id="event-modal" class="modal-overlay" onclick="closeEventModal(event)">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div id="modal-cat-badge"></div>
+        <button onclick="closeEventModal()" class="btn-icon flex-shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <h2 id="modal-title" class="font-bold text-base leading-snug mb-2" style="color:var(--text-1)"></h2>
+      <div id="modal-time" class="text-sm font-semibold mb-1" style="color:var(--accent)"></div>
+      <div id="modal-stage" class="text-xs mb-3" style="color:var(--text-2)"></div>
+      <p id="modal-description" class="text-sm leading-relaxed mb-4" style="color:var(--text-2);display:none;white-space:pre-line"></p>
+      <div id="modal-speakers" class="space-y-2 mb-5"></div>
+      <button id="modal-save-btn" onclick="modalToggleSave()" class="btn-primary w-full">Save to My List</button>
+    </div>
+  </div>
 
   <!-- Notes Modal -->
   <div id="notes-modal" class="modal-overlay" onclick="closeNotesModal(event)">
