@@ -2,7 +2,7 @@ import './styles/main.css'
 import Alpine from 'alpinejs'
 import { initApp } from './lib/nav'
 import { getMyEvents, toggleMyEvent, getProfile } from './lib/store'
-import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, hasConflict, timeToMinutes, isSuggestedEvent, getEventPrimaryTeam } from './lib/utils'
+import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, hasConflict, timeToMinutes, isSuggestedEvent, getEventPrimaryTeam, isEnglishEvent } from './lib/utils'
 import { initEventModal, openEventModal, closeEventModal, modalToggleSave, setModalNavList, modalNavPrev, modalNavNext } from './lib/eventModal'
 import type { Event, CategoryId } from './lib/types'
 import eventsData from './data/events.json'
@@ -30,6 +30,7 @@ let currentDay = 1
 let currentView: 'list' | 'timeline' = 'list'
 let showSuggestedOnly = false
 let showTeamOnly = false
+let showEnglishOnly = false
 
 // Parse URL params
 const params = new URLSearchParams(window.location.search)
@@ -37,6 +38,7 @@ const urlCat = params.get('category') as CategoryId | null
 if (urlCat) currentCategory = urlCat
 if (params.get('filter') === 'for-syco') showSuggestedOnly = true
 if (params.get('filter') === 'for-team') showTeamOnly = true
+if (params.get('filter') === 'english') showEnglishOnly = true
 
 function buildStageSelect() {
   const sel = document.getElementById('stage-select') as HTMLSelectElement
@@ -90,6 +92,7 @@ function getFilteredEvents(): Event[] {
         const team = getEventPrimaryTeam(e)
         if (team && team !== profile.role) return false
       }
+      if (showEnglishOnly && !isEnglishEvent(e)) return false
       if (currentCategory && !e.categories.includes(currentCategory)) return false
       if (currentStage && e.stage !== currentStage) return false
       if (query) {
@@ -249,6 +252,7 @@ function render() {
   currentCategory = cat
   showSuggestedOnly = false
   showTeamOnly = false
+  showEnglishOnly = false
   document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
   document.getElementById(cat ? `cat-${cat}` : 'cat-all')?.classList.add('active')
   render()
@@ -257,6 +261,7 @@ function render() {
 ;(window as any).eventsSetSuggested = () => {
   showSuggestedOnly = true
   showTeamOnly = false
+  showEnglishOnly = false
   currentCategory = ''
   document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
   document.getElementById('cat-for-syco')?.classList.add('active')
@@ -266,9 +271,20 @@ function render() {
 ;(window as any).eventsSetTeam = () => {
   showTeamOnly = true
   showSuggestedOnly = false
+  showEnglishOnly = false
   currentCategory = ''
   document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
   document.getElementById('cat-for-team')?.classList.add('active')
+  render()
+}
+
+;(window as any).eventsSetEnglish = () => {
+  showEnglishOnly = true
+  showSuggestedOnly = false
+  showTeamOnly = false
+  currentCategory = ''
+  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
+  document.getElementById('cat-english')?.classList.add('active')
   render()
 }
 
@@ -330,6 +346,10 @@ buildTeamChip()
 
 if (showTeamOnly) {
   ;(window as any).eventsSetTeam()
+} else if (showEnglishOnly) {
+  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
+  document.getElementById('cat-english')?.classList.add('active')
+  render()
 } else if (showSuggestedOnly) {
   document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
   document.getElementById('cat-for-syco')?.classList.add('active')

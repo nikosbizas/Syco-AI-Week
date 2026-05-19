@@ -183,6 +183,22 @@ export function getEventPrimaryTeam(event: Event): string {
   return bestScore >= 1 ? best : ''
 }
 
+// ─── English filter ──────────────────────────────────────────────────────────
+// Detects Italian-language events by looking for Italian-specific words/accents
+// in the title and description. If none are found the talk is likely in English.
+const ITALIAN_MARKERS = [
+  /\b(della|delle|degli|del|dei|dal|dalla|dalle|dagli)\b/i,
+  /\b(nel|nella|nelle|negli|nello|sui|sulla|sulle|sugli)\b/i,
+  /\b(questo|questa|questi|queste|anche|però|quando|mentre|sempre)\b/i,
+  /\b(intelligenza|artificiale|azienda|impresa|lavoro|futuro)\b/i,
+  /[àèìòùé]/,
+]
+
+export function isEnglishEvent(event: Event): boolean {
+  const text = (event.title + ' ' + (event.description || '')).toLowerCase()
+  return !ITALIAN_MARKERS.some(p => p.test(text))
+}
+
 export interface EventColumn {
   event: Event
   col: number
