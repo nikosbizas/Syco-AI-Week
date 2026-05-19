@@ -2,7 +2,7 @@ import './styles/main.css'
 import Alpine from 'alpinejs'
 import { initApp } from './lib/nav'
 import { getMyEvents, setMyEvents, getNoteForEvent, saveNote } from './lib/store'
-import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, eventsOverlap, timeToMinutes } from './lib/utils'
+import { formatTime, speakerText, CATEGORY_COLORS, CATEGORY_LABELS, primaryCategory, eventsOverlap, timeToMinutes, isEnglishEvent } from './lib/utils'
 import { initEventModal, openEventModal, closeEventModal, modalToggleSave, setModalNavList, modalNavPrev, modalNavNext } from './lib/eventModal'
 import type { Event } from './lib/types'
 import eventsData from './data/events.json'
@@ -22,6 +22,7 @@ initEventModal(allEvents, () => renderMyEvents())
 
 let currentView: 'list' | 'timeline' = 'list'
 let currentDay = 1
+let showEnglishOnly = false
 
 const _now = new Date()
 if (_now.getFullYear() === 2026 && _now.getMonth() === 4 && _now.getDate() === 20) {
@@ -50,8 +51,15 @@ function showToast(msg: string) {
 
 function renderMyEvents() {
   const myIds = getMyEvents()
+  const filtered = getMyFiltered()
   const countEl = document.getElementById('myevents-count')
-  if (countEl) countEl.textContent = `${myIds.length} event${myIds.length !== 1 ? 's' : ''} saved`
+  if (countEl) {
+    const total = myIds.length
+    const shown = filtered.length
+    countEl.textContent = showEnglishOnly
+      ? `${shown} English · ${total} saved`
+      : `${total} event${total !== 1 ? 's' : ''} saved`
+  }
 
   if (currentView === 'timeline') {
     renderTimeline()
@@ -62,12 +70,17 @@ function renderMyEvents() {
 
 // ─── List view ────────────────────────────────────────────────────────────────
 
-function renderList() {
+function getMyFiltered() {
   const myIds = getMyEvents()
   const dateStr = currentDay === 1 ? '2026-05-19' : '2026-05-20'
-  const myEvents = allEvents
-    .filter(e => myIds.includes(e.id) && e.date === dateStr)
+  return allEvents
+    .filter(e => myIds.includes(e.id) && e.date === dateStr && (!showEnglishOnly || isEnglishEvent(e)))
     .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))
+}
+
+function renderList() {
+  const myIds = getMyEvents()
+  const myEvents = getMyFiltered()
 
   const container = document.getElementById('myevents-content')
   if (!container) return
@@ -143,10 +156,7 @@ function renderMyEventCard(event: Event, dayEvents: Event[], index: number): str
 
 function renderTimeline() {
   const myIds = getMyEvents()
-  const dateStr = currentDay === 1 ? '2026-05-19' : '2026-05-20'
-  const myEvents = allEvents
-    .filter(e => myIds.includes(e.id) && e.date === dateStr)
-    .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))
+  const myEvents = getMyFiltered()
 
   setModalNavList(myEvents.map(e => e.id))
 
@@ -265,6 +275,17 @@ function renderTimeline() {
       timelineBtn.style.cssText = 'background:var(--accent);color:white'
       listBtn.style.cssText = 'background:transparent;color:var(--text-2)'
     }
+  }
+  renderMyEvents()
+}
+
+;(window as any).myEventsToggleEnglish = () => {
+  showEnglishOnly = !showEnglishOnly
+  const btn = document.getElementById('english-filter-btn')
+  if (btn) {
+    btn.style.background = showEnglishOnly ? 'rgba(34,197,94,0.15)' : 'transparent'
+    btn.style.color = showEnglishOnly ? '#22c55e' : 'var(--text-2)'
+    btn.style.borderColor = showEnglishOnly ? '#22c55e' : 'var(--border)'
   }
   renderMyEvents()
 }
