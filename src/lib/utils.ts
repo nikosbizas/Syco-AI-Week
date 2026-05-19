@@ -184,19 +184,46 @@ export function getEventPrimaryTeam(event: Event): string {
 }
 
 // ─── English filter ──────────────────────────────────────────────────────────
-// Detects Italian-language events by looking for Italian-specific words/accents
-// in the title and description. If none are found the talk is likely in English.
-const ITALIAN_MARKERS = [
-  /\b(della|delle|degli|del|dei|dal|dalla|dalle|dagli)\b/i,
-  /\b(nel|nella|nelle|negli|nello|sui|sulla|sulle|sugli)\b/i,
-  /\b(questo|questa|questi|queste|anche|però|quando|mentre|sempre)\b/i,
-  /\b(intelligenza|artificiale|azienda|impresa|lavoro|futuro)\b/i,
-  /[àèìòùé]/,
-]
+// Detects Italian-language events by checking speaker first names and company
+// suffixes. Title/description are ignored — they're mostly written in English
+// regardless of the spoken language.
+
+const ITALIAN_FIRST_NAMES = new Set([
+  // Male
+  'Andrea','Antonio','Alessandro','Marco','Stefano','Fabio','Federico',
+  'Francesco','Massimo','Matteo','Davide','Giovanni','Luca','Daniele',
+  'Gabriele','Roberto','Emanuele','Vincenzo','Paolo','Massimiliano',
+  'Nicola','Pasquale','Giuseppe','Mattia','Alberto','Claudio','Enrico',
+  'Giacomo','Valerio','Giacinto','Gianluigi','Fabrizio','Michele',
+  'Raffaele','Maurizio','Simone','Riccardo','Leonardo','Jacopo','Mario',
+  'Giulio','Alessio','Domenico','Mauro','Piero','Lorenzo','Gianluca',
+  'Salvatore','Danilo','Vito','Aldo','Gian','Carmelo','Edoardo',
+  'Corrado','Filippo','Giampaolo','Giampiero','Gianmarco','Gianluca',
+  'Pierluigi','Pierfrancesco','Antonino','Agostino','Ezio','Enzo',
+  'Renzo','Renato','Sandro','Silvio','Sergio','Dario','Bruno',
+  'Flavio','Samuele','Giancarlo','Cristian','Walter','Matteo',
+  // Female
+  'Francesca','Chiara','Lucia','Maria','Elena','Giada','Alessia',
+  'Roberta','Valeria','Cristina','Silvia','Anna','Lucrezia','Maddalena',
+  'Paola','Martina','Laura','Sara','Valentina','Monica','Federica',
+  'Claudia','Marika','Antonella','Elisabetta','Giulia','Ilaria',
+  'Arianna','Rachele','Carlotta','Catia','Ornella','Alessandra',
+  'Miriam','Marta','Livia','Cinzia','Sabrina','Tiziana','Patrizia',
+  'Donatella','Loredana','Rosaria','Carmela','Giuseppina','Benedetta',
+  'Titina','Gaia','Debora','Concetta',
+])
+
+const ITALIAN_COMPANY_RE = /\b(s\.?r\.?l\.?|s\.?p\.?a\.?|s\.?n\.?c\.?|s\.?a\.?s\.?)\b/i
 
 export function isEnglishEvent(event: Event): boolean {
-  const text = (event.title + ' ' + (event.description || '')).toLowerCase()
-  return !ITALIAN_MARKERS.some(p => p.test(text))
+  const speakers = event.speakers
+  if (!speakers.length) return true
+  return !speakers.some(s => {
+    const first = s.name.split(' ')[0]
+    if (ITALIAN_FIRST_NAMES.has(first)) return true
+    if (s.company && ITALIAN_COMPANY_RE.test(s.company)) return true
+    return false
+  })
 }
 
 export interface EventColumn {
