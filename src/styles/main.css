@@ -46,13 +46,18 @@
 
 html {
   scroll-behavior: smooth;
+  height: 100%;
+  overflow: hidden; /* viewport never scrolls → no iOS bounce at viewport level */
 }
 
 body {
   background-color: var(--bg-base);
   color: var(--text-1);
   font-family: 'Inter', system-ui, sans-serif;
-  min-height: 100dvh;
+  height: 100%;
+  overflow-y: auto;                     /* body is the scroll container */
+  -webkit-overflow-scrolling: touch;    /* smooth momentum scroll on iOS */
+  overscroll-behavior-y: none;          /* suppress rubber-band bounce */
   padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   -webkit-font-smoothing: antialiased;
 }
