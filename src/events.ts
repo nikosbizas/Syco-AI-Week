@@ -248,43 +248,56 @@ function render() {
 // Public functions
 ;(window as any).eventsFilter = () => render()
 
+// "All" resets everything. A specific category only affects category chips —
+// special toggles (For Syco, English, For Team) are preserved.
 ;(window as any).eventsSetCategory = (cat: CategoryId | '') => {
   currentCategory = cat
-  showSuggestedOnly = false
-  showTeamOnly = false
-  showEnglishOnly = false
-  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
-  document.getElementById(cat ? `cat-${cat}` : 'cat-all')?.classList.add('active')
+  if (cat === '') {
+    // All button: full reset
+    showSuggestedOnly = false
+    showTeamOnly = false
+    showEnglishOnly = false
+    document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
+    document.getElementById('cat-all')?.classList.add('active')
+  } else {
+    // Category chip: exclusive among category chips, keep special filters intact
+    document.querySelectorAll('[id^="cat-"]:not(#cat-for-syco):not(#cat-for-team):not(#cat-english)').forEach(el => el.classList.remove('active'))
+    document.getElementById(`cat-${cat}`)?.classList.add('active')
+  }
   render()
 }
 
+// Toggle — independent from other special filters
 ;(window as any).eventsSetSuggested = () => {
-  showSuggestedOnly = true
-  showTeamOnly = false
-  showEnglishOnly = false
-  currentCategory = ''
-  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
-  document.getElementById('cat-for-syco')?.classList.add('active')
+  showSuggestedOnly = !showSuggestedOnly
+  if (showSuggestedOnly) {
+    showTeamOnly = false
+    currentCategory = ''
+    document.querySelectorAll('[id^="cat-"]:not(#cat-for-syco):not(#cat-for-team):not(#cat-english)').forEach(el => el.classList.remove('active'))
+    document.getElementById('cat-all')?.classList.add('active')
+    document.getElementById('cat-for-team')?.classList.remove('active')
+  }
+  document.getElementById('cat-for-syco')?.classList.toggle('active', showSuggestedOnly)
   render()
 }
 
 ;(window as any).eventsSetTeam = () => {
-  showTeamOnly = true
-  showSuggestedOnly = false
-  showEnglishOnly = false
-  currentCategory = ''
-  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
-  document.getElementById('cat-for-team')?.classList.add('active')
+  showTeamOnly = !showTeamOnly
+  if (showTeamOnly) {
+    showSuggestedOnly = false
+    currentCategory = ''
+    document.querySelectorAll('[id^="cat-"]:not(#cat-for-syco):not(#cat-for-team):not(#cat-english)').forEach(el => el.classList.remove('active'))
+    document.getElementById('cat-all')?.classList.add('active')
+    document.getElementById('cat-for-syco')?.classList.remove('active')
+  }
+  document.getElementById('cat-for-team')?.classList.toggle('active', showTeamOnly)
   render()
 }
 
+// Toggle — independent from all other filters
 ;(window as any).eventsSetEnglish = () => {
-  showEnglishOnly = true
-  showSuggestedOnly = false
-  showTeamOnly = false
-  currentCategory = ''
-  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
-  document.getElementById('cat-english')?.classList.add('active')
+  showEnglishOnly = !showEnglishOnly
+  document.getElementById('cat-english')?.classList.toggle('active', showEnglishOnly)
   render()
 }
 
@@ -344,21 +357,18 @@ function render() {
 buildStageSelect()
 buildTeamChip()
 
-if (showTeamOnly) {
-  ;(window as any).eventsSetTeam()
-} else if (showEnglishOnly) {
-  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
-  document.getElementById('cat-english')?.classList.add('active')
-  render()
-} else if (showSuggestedOnly) {
-  document.querySelectorAll('[id^="cat-"]').forEach(el => el.classList.remove('active'))
-  document.getElementById('cat-for-syco')?.classList.add('active')
-  render()
-} else if (urlCat) {
-  ;(window as any).eventsSetCategory(urlCat)
-} else {
-  render()
+// Activate chips from URL params (multiple can be active simultaneously)
+if (showSuggestedOnly) document.getElementById('cat-for-syco')?.classList.add('active')
+if (showTeamOnly) document.getElementById('cat-for-team')?.classList.add('active')
+if (showEnglishOnly) document.getElementById('cat-english')?.classList.add('active')
+if (!showSuggestedOnly && !showTeamOnly && !urlCat) {
+  document.getElementById('cat-all')?.classList.add('active')
 }
+if (urlCat) {
+  document.querySelectorAll('[id^="cat-"]:not(#cat-for-syco):not(#cat-for-team):not(#cat-english)').forEach(el => el.classList.remove('active'))
+  document.getElementById(`cat-${urlCat}`)?.classList.add('active')
+}
+render()
 
 const today = new Date()
 if (today.getFullYear() === 2026 && today.getMonth() === 4 && today.getDate() === 20) {
