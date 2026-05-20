@@ -46,11 +46,9 @@ function daysUntilEvent(): number {
 
 // ─── Auto-select current day ──────────────────────────────────────────────────
 
-let currentDay = 1
 const now = new Date()
-if (now.getFullYear() === 2026 && now.getMonth() === 4 && now.getDate() === 20) {
-  currentDay = 2
-}
+const _isDay2 = now.getFullYear() === 2026 && now.getMonth() === 4 && now.getDate() >= 20
+let currentDay = _isDay2 ? 2 : 1
 
 // ─── Render helpers ───────────────────────────────────────────────────────────
 

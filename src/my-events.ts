@@ -21,13 +21,11 @@ initEventModal(allEvents, () => renderMyEvents())
 ;(window as any).modalNavNext = modalNavNext
 
 let currentView: 'list' | 'timeline' = 'list'
-let currentDay = 1
 let showEnglishOnly = false
 
 const _now = new Date()
-if (_now.getFullYear() === 2026 && _now.getMonth() === 4 && _now.getDate() === 20) {
-  currentDay = 2
-}
+const _isDay2 = _now.getFullYear() === 2026 && _now.getMonth() === 4 && _now.getDate() >= 20
+let currentDay = _isDay2 ? 2 : 1
 
 let currentNoteEventId: string | null = null
 let currentNotesTab: 'text' | 'images' | 'audio' = 'text'
@@ -184,8 +182,8 @@ function renderTimeline() {
   const COL_W = 160
   const HEADER_H = 36
   const PX_MIN = HOUR_H / 60
+  const totalH = HEADER_H + 11 * HOUR_H
 
-  // One column per stage, sorted by earliest saved event in that stage
   const stageFirst = new Map<string, number>()
   myEvents.forEach(e => {
     const t = timeToMinutes(e.startTime)
@@ -194,35 +192,48 @@ function renderTimeline() {
   })
   const stages = [...stageFirst.keys()].sort((a, b) => stageFirst.get(a)! - stageFirst.get(b)!)
   const stageCol = new Map(stages.map((s, i) => [s, i]))
-  const totalW = GUTTER + stages.length * COL_W
+  const colsW = stages.length * COL_W
 
-  const headersHtml =
-    `<div style="position:absolute;top:0;left:0;width:${totalW}px;height:${HEADER_H}px;background:var(--bg-elevated);border-bottom:2px solid var(--border);pointer-events:none"></div>` +
-    stages.map((stage, i) => {
-      const left = GUTTER + i * COL_W
-      return `<div style="position:absolute;top:0;left:${left + 1}px;width:${COL_W - 2}px;height:${HEADER_H}px;padding:0 7px;font-size:10px;font-weight:700;letter-spacing:0.03em;color:var(--text-1);display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${stage}</div>`
-    }).join('')
-
-  const vSepsHtml =
-    `<div style="position:absolute;top:0;left:${GUTTER}px;width:1px;height:100%;background:var(--border);pointer-events:none"></div>` +
-    stages.slice(1).map((_, i) => {
-      const left = GUTTER + (i + 1) * COL_W
-      return `<div style="position:absolute;top:${HEADER_H}px;left:${left}px;width:1px;height:${11 * HOUR_H}px;background:var(--border);opacity:0.4;pointer-events:none"></div>`
-    }).join('')
-
-  const hoursHtml = Array.from({ length: 12 }, (_, i) => {
+  // ── Gutter hour labels ───────────────────────────────────────────────────────
+  const gutterLabels = Array.from({ length: 12 }, (_, i) => {
     const h = 9 + i
     const top = HEADER_H + i * HOUR_H
-    return `<div style="position:absolute;top:${top}px;left:0;width:${totalW}px;display:flex;align-items:flex-start;pointer-events:none">
-      <span style="width:${GUTTER}px;flex-shrink:0;font-size:10px;color:var(--text-2);text-align:right;padding-right:6px;margin-top:-7px">${h.toString().padStart(2, '0')}:00</span>
-      <div style="flex:1;border-top:1px solid var(--border)"></div>
-    </div>`
+    return `<div style="position:absolute;top:${top}px;right:6px;font-size:10px;color:var(--text-2);line-height:1;margin-top:-7px">${h.toString().padStart(2, '0')}:00</div>`
   }).join('')
 
-  const halfHtml = Array.from({ length: 11 }, (_, i) => {
-    const top = HEADER_H + i * HOUR_H + HOUR_H / 2
-    return `<div style="position:absolute;top:${top}px;left:${GUTTER}px;width:${totalW - GUTTER}px;border-top:1px dashed var(--border);opacity:0.3;pointer-events:none"></div>`
-  }).join('')
+  // ── Current-time line ────────────────────────────────────────────────────────
+  const nowDate = new Date()
+  const nowMins = nowDate.getHours() * 60 + nowDate.getMinutes()
+  let nowGutterHtml = ''
+  let nowLineHtml = ''
+  if (nowMins > TSTART && nowMins < TSTART + 11 * 60) {
+    const nowTop = HEADER_H + (nowMins - TSTART) * PX_MIN
+    const hh = nowDate.getHours().toString().padStart(2, '0')
+    const mm = nowDate.getMinutes().toString().padStart(2, '0')
+    nowGutterHtml = `<div style="position:absolute;top:${nowTop}px;right:4px;font-size:9px;font-weight:700;color:var(--danger);line-height:1;margin-top:-5px;z-index:2">${hh}:${mm}</div>`
+    nowLineHtml = `<div style="position:absolute;top:${nowTop}px;left:0;width:${colsW}px;height:2px;background:var(--danger);z-index:5;pointer-events:none">
+      <div style="position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger)"></div>
+    </div>`
+  }
+
+  // ── Stage headers ────────────────────────────────────────────────────────────
+  const headersHtml =
+    `<div style="position:absolute;top:0;left:0;width:${colsW}px;height:${HEADER_H}px;background:var(--bg-elevated);border-bottom:2px solid var(--border);pointer-events:none"></div>` +
+    stages.map((stage, i) =>
+      `<div style="position:absolute;top:0;left:${i * COL_W + 1}px;width:${COL_W - 2}px;height:${HEADER_H}px;padding:0 7px;font-size:10px;font-weight:700;letter-spacing:0.03em;color:var(--text-1);display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${stage}</div>`
+    ).join('')
+
+  const vSepsHtml = stages.slice(1).map((_, i) =>
+    `<div style="position:absolute;top:${HEADER_H}px;left:${(i + 1) * COL_W}px;width:1px;height:${11 * HOUR_H}px;background:var(--border);opacity:0.4;pointer-events:none"></div>`
+  ).join('')
+
+  const hoursHtml = Array.from({ length: 12 }, (_, i) =>
+    `<div style="position:absolute;top:${HEADER_H + i * HOUR_H}px;left:0;width:${colsW}px;border-top:1px solid var(--border);pointer-events:none"></div>`
+  ).join('')
+
+  const halfHtml = Array.from({ length: 11 }, (_, i) =>
+    `<div style="position:absolute;top:${HEADER_H + i * HOUR_H + HOUR_H / 2}px;left:0;width:${colsW}px;border-top:1px dashed var(--border);opacity:0.3;pointer-events:none"></div>`
+  ).join('')
 
   const blocksHtml = myEvents.map(e => {
     const catId = primaryCategory(e)
@@ -231,24 +242,29 @@ function renderTimeline() {
     const note = getNoteForEvent(e.id)
     const hasNote = note.text || note.images.length > 0 || note.audioUrl
     const col = stageCol.get(e.stage) ?? 0
-    const startMins = timeToMinutes(e.startTime) - TSTART
-    const durMins = timeToMinutes(e.endTime) - timeToMinutes(e.startTime)
-    const top = HEADER_H + startMins * PX_MIN
-    const height = Math.max(durMins * PX_MIN, 22)
-    const left = GUTTER + col * COL_W + 2
-    const width = COL_W - 4
+    const top = HEADER_H + (timeToMinutes(e.startTime) - TSTART) * PX_MIN
+    const height = Math.max((timeToMinutes(e.endTime) - timeToMinutes(e.startTime)) * PX_MIN, 22)
+    const left = col * COL_W + 2
     return `<div class="cursor-pointer" onclick="openEventModal('${e.id}')"
-         style="position:absolute;top:${top}px;left:${left}px;width:${width}px;height:${height}px;
+         style="position:absolute;top:${top}px;left:${left}px;width:${COL_W - 4}px;height:${height}px;
                 background:${catColor}22;border-left:3px solid ${catColor};color:${catColor};
-                border-radius:4px;padding:3px 6px;overflow:hidden;
-                box-shadow:0 0 0 1px ${catColor}">
+                border-radius:4px;padding:3px 6px;overflow:hidden;box-shadow:0 0 0 1px ${catColor}">
       <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3">${formatTime(e.startTime)} ${e.title}${hasNote ? ' 📝' : ''}</div>
       ${height >= 30 ? `<div style="font-size:10px;opacity:0.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3">${catLabel}</div>` : ''}
     </div>`
   }).join('')
 
-  const totalH = HEADER_H + 11 * HOUR_H
-  container.innerHTML = `<div style="position:relative;width:${totalW}px;height:${totalH}px">${headersHtml}${vSepsHtml}${hoursHtml}${halfHtml}${blocksHtml}</div>`
+  container.innerHTML = `
+    <div style="display:flex;align-items:flex-start">
+      <div style="flex-shrink:0;width:${GUTTER}px;position:relative;height:${totalH}px;background:var(--bg-base);border-right:1px solid var(--border);z-index:2">
+        ${gutterLabels}${nowGutterHtml}
+      </div>
+      <div style="overflow-x:auto;flex:1">
+        <div style="position:relative;width:${colsW}px;height:${totalH}px">
+          ${headersHtml}${vSepsHtml}${hoursHtml}${halfHtml}${blocksHtml}${nowLineHtml}
+        </div>
+      </div>
+    </div>`
 }
 
 // ─── View / day switchers ─────────────────────────────────────────────────────
